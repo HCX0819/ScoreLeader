@@ -241,7 +241,7 @@ export default function ControllerPage() {
                 <div className="group flex items-center gap-3 cursor-pointer" onClick={() => setEditingTitle(true)}>
                   <h1 className="font-black text-xl sm:text-2xl tracking-tight text-white hover:text-violet-200 transition-colors">{board.title}</h1>
                   <Edit3 size={16} className="text-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  {board.pin && <Lock size={16} className="text-violet-400" title="PIN Protected" />}
+                  {board.pin && <Lock size={16} className="text-violet-400" />}
                 </div>
               )}
               <p className="text-xs text-white/30 font-mono tracking-widest uppercase">ID: {boardId.slice(0, 6)}</p>
