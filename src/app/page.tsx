@@ -42,7 +42,7 @@ export default function Dashboard() {
         { id: crypto.randomUUID(), name: 'Team B' }
       ],
       activities: [
-        { id: crypto.randomUUID(), name: 'Score', subGames: [], directScores: {} }
+        { id: crypto.randomUUID(), name: 'ROUND 1', subGames: [], directScores: {} }
       ]
     };
 

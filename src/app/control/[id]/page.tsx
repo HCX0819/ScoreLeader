@@ -204,7 +204,7 @@ export default function ControllerPage() {
     const newData = { ...data };
     newData.activities.push({
       id: crypto.randomUUID(),
-      name: `Round ${newData.activities.length + 1}`,
+      name: `ROUND ${newData.activities.length + 1}`,
       subGames: [],
       directScores: {}
     });
