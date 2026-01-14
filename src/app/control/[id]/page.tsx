@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useScoreboard, ScoreboardData } from "@/hooks/useScoreboard";
 import { supabase } from "@/lib/supabase";
-import { useEffect, useState, useRef } from "react";
+import { useState, useRef } from "react";
 import {
   Plus, Trash2, UserPlus, Columns, ChevronLeft,
   Settings, Share2, ArrowLeft, Upload, Image as ImageIcon,
@@ -23,31 +23,17 @@ export default function ControllerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // PIN & Settings State
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [authPin, setAuthPin] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return sessionStorage.getItem(`board_auth_${boardId}`);
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [copiedStaff, setCopiedStaff] = useState(false);
   const [copiedPublic, setCopiedPublic] = useState(false);
   const [newIncrement, setNewIncrement] = useState("");
 
-  // Authentication Check
-  useEffect(() => {
-    if (!board) return;
-
-    // If no PIN is set, allow access
-    if (!board.pin) {
-      setIsAuthorized(true);
-      return;
-    }
-
-    // Check session storage for auth
-    const storedAuth = sessionStorage.getItem(`board_auth_${boardId}`);
-    if (storedAuth === board.pin) {
-      setIsAuthorized(true);
-    } else {
-      setIsAuthorized(false);
-    }
-  }, [board, boardId]);
+  const isAuthorized = !board?.pin || authPin === board.pin;
 
   // Loading States
   if (!boardId) return <div className="min-h-screen bg-[#050505] flex items-center justify-center text-white/50">Initializing...</div>;
@@ -58,7 +44,7 @@ export default function ControllerPage() {
     return <PinEntry onUnlock={(pin) => {
       if (pin === board.pin) {
         sessionStorage.setItem(`board_auth_${boardId}`, pin);
-        setIsAuthorized(true);
+        setAuthPin(pin);
         return true;
       }
       return false;
@@ -101,6 +87,7 @@ export default function ControllerPage() {
       setNewPin("");
       if (newPin) {
         sessionStorage.setItem(`board_auth_${boardId}`, newPin);
+        setAuthPin(newPin);
       }
     }
   };
@@ -416,7 +403,7 @@ export default function ControllerPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-2">
+                    <label className="block text-xs font-bold uppercase tracking-widest mb-2 text-red-400">
                       Controller Link (For Staff Only)
                     </label>
                     <div className="flex gap-2">
@@ -433,6 +420,38 @@ export default function ControllerPage() {
                         {copiedStaff ? <Check size={18} /> : <Copy size={18} />}
                       </button>
                     </div>
+                  </div>
+                </div>
+
+                {/* PIN Section */}
+                <div className="space-y-3 pt-2 border-t border-white/10">
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="block text-xs font-bold text-white/40 uppercase tracking-widest">
+                      Board PIN (Optional)
+                    </label>
+                    {board.pin && (
+                      <span className="text-[10px] font-bold text-emerald-400/80 uppercase tracking-widest">
+                        PIN Enabled
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-white/40">
+                    Set a PIN to restrict access to this controller link. Leave empty and save to remove the PIN.
+                  </p>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="password"
+                      placeholder={board.pin ? "•••••• (change or clear to remove)" : "e.g. 1234"}
+                      value={newPin}
+                      onChange={(e) => setNewPin(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-violet-500/50 transition-colors"
+                    />
+                    <button
+                      onClick={updatePin}
+                      className="px-4 py-2 rounded-xl text-sm font-bold bg-violet-600 hover:bg-violet-500 text-white border border-violet-500/40 transition-colors whitespace-nowrap"
+                    >
+                      Save PIN
+                    </button>
                   </div>
                 </div>
 

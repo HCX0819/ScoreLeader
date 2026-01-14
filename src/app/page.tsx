@@ -163,14 +163,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-violet-500/30 font-sans" onClick={() => setMenuOpenId(null)}>
+    <div className="min-h-screen bg-[#0b1220] text-white selection:bg-violet-500/30 font-sans" onClick={() => setMenuOpenId(null)}>
 
       {/* Background Glow */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_10%,_rgba(120,40,200,0.15),_transparent_50%)] pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_10%,_rgba(120,40,200,0.22),_transparent_55%)] pointer-events-none" />
 
       {/* Top Navigation */}
       {/* Top Navigation */}
-      <nav className="sticky top-0 z-50 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center border-b border-white/5 bg-[#050505] shadow-lg">
+      <nav className="sticky top-0 z-50 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center border-b border-white/10 bg-[#0b1220]/90 shadow-lg backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-end justify-center pb-1.5 gap-[2px] shadow-[0_0_15px_rgba(250,204,21,0.3)]">
             <div className="w-[3px] h-2.5 bg-black/40 rounded-t-sm" />
@@ -201,7 +201,7 @@ export default function Dashboard() {
           <button
             onClick={(e) => { e.stopPropagation(); createNewBoard(); }}
             disabled={creating}
-            className="group relative px-4 sm:px-6 py-2.5 sm:py-3 bg-violet-600 rounded-full font-bold text-sm text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2 overflow-hidden"
+            className="group relative px-4 sm:px-6 py-2.5 sm:py-3 bg-violet-600 rounded-full font-bold text-sm text-white shadow-[0_0_20px_rgba(139,92,246,0.25)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative flex items-center gap-2">
@@ -214,7 +214,7 @@ export default function Dashboard() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-40 bg-white/5 rounded-2xl border border-white/5 animate-pulse" />
+              <div key={i} className="h-40 bg-white/10 rounded-2xl border border-white/10 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -223,7 +223,7 @@ export default function Dashboard() {
               <div
                 key={board.id}
                 onClick={() => router.push(`/control/${board.id}`)}
-                className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 p-6 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-2xl hover:-translate-y-1"
+                className="group relative bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/25 p-6 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-2xl hover:-translate-y-1"
               >
                 <div className="flex items-start justify-between mb-6">
                   {/* Logo Thumbnail */}
