@@ -5,11 +5,10 @@ import { useScoreboard, ScoreboardData } from "@/hooks/useScoreboard";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState, useRef } from "react";
 import {
-  Plus, Share2,
-  Trash2, Edit3, UserPlus, Columns,
-  ChevronLeft, Upload, Image as ImageIcon,
-  Lock, Copy, Check
-} from "lucide-react";
+  Plus, Trash2, UserPlus, Columns, ChevronLeft,
+  Settings, Share2, ArrowLeft, Upload, Image as ImageIcon,
+  Edit3, Lock, Check, Copy, ExternalLink, Activity, Info
+} from 'lucide-react';
 import Link from "next/link";
 import { compressImage } from "@/lib/image-compression";
 import PinEntry from "@/components/PinEntry";
@@ -263,57 +262,69 @@ export default function ControllerPage() {
       {/* Background Glow */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(120,40,200,0.1),_transparent_50%)] pointer-events-none" />
 
-      {/* Header - Fixed Height */}
-      <header className="flex-none px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-xl z-40 relative">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white">
-            <ChevronLeft />
-          </Link>
-          <div className="flex items-center gap-4">
-            {/* Logo Upload */}
-            <div
-              className="relative w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer group border border-white/10 hover:border-violet-500/50 transition-colors shadow-inner"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {data.logo ? (
-                <img src={data.logo} alt="Logo" className="w-full h-full object-contain" />
-              ) : (
-                <ImageIcon className="text-white/20 group-hover:text-violet-400 transition-colors" size={20} />
-              )}
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Upload className="text-white" size={16} />
-              </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept="image/*"
-                onChange={handleLogoUpload}
-              />
-            </div>
-
-            {/* Title Editing */}
-            <div>
-              {editingTitle ? (
-                <input
-                  autoFocus
-                  className="font-black text-xl sm:text-2xl tracking-tight text-white outline-none border-b-2 border-violet-500 bg-transparent w-full"
-                  defaultValue={board.title}
-                  onBlur={(e) => updateTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                />
-              ) : (
-                <div className="group flex items-center gap-3 cursor-pointer" onClick={() => setEditingTitle(true)}>
-                  <h1 className="font-black text-xl sm:text-2xl tracking-tight text-white hover:text-violet-200 transition-colors">{board.title}</h1>
-                  <Edit3 size={16} className="text-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  {board.pin && <Lock size={16} className="text-violet-400" />}
+      {/* Header - Adaptive Height */}
+      <header className="flex-none px-3 sm:px-6 py-2 sm:py-4 flex flex-col sm:flex-row items-center justify-between border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-xl z-40 relative gap-3 sm:gap-0">
+        <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white">
+              <ChevronLeft size={20} />
+            </Link>
+            <div className="flex items-center gap-3">
+              {/* Logo Upload - Slightly smaller on mobile */}
+              <div
+                className="relative w-10 h-10 sm:w-12 sm:h-12 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer group border border-white/10 hover:border-violet-500/50 transition-colors shadow-inner"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {data.logo ? (
+                  <img src={data.logo} alt="Logo" className="w-full h-full object-contain" />
+                ) : (
+                  <ImageIcon className="text-white/20 group-hover:text-violet-400 transition-colors" size={18} />
+                )}
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Upload className="text-white" size={14} />
                 </div>
-              )}
-              <p className="text-xs text-white/30 font-mono tracking-widest uppercase">ID: {boardId.slice(0, 6)}</p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                />
+              </div>
+
+              {/* Title Editing */}
+              <div className="max-w-[150px] sm:max-w-xs">
+                {editingTitle ? (
+                  <input
+                    autoFocus
+                    className="font-black text-lg sm:text-2xl tracking-tight text-white outline-none border-b-2 border-violet-500 bg-transparent w-full"
+                    defaultValue={board.title}
+                    onBlur={(e) => updateTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                  />
+                ) : (
+                  <div className="group flex items-center gap-2 cursor-pointer" onClick={() => setEditingTitle(true)}>
+                    <h1 className="font-black text-lg sm:text-2xl tracking-tight text-white hover:text-violet-200 transition-colors truncate">{board.title}</h1>
+                    <Edit3 size={14} className="text-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    {board.pin && <Lock size={14} className="text-violet-400 shrink-0" />}
+                  </div>
+                )}
+                <p className="text-[10px] text-white/30 font-mono tracking-widest uppercase">ID: {boardId.slice(0, 6)}</p>
+              </div>
             </div>
           </div>
+
+          {/* Mobile Edit Indicator */}
+          <div className="flex md:hidden items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500"></span>
+            </span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-violet-300">Editor</span>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto sm:overflow-visible no-scrollbar pb-1 sm:pb-0">
           <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-4 py-2 backdrop-blur-md">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
@@ -322,19 +333,18 @@ export default function ControllerPage() {
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-300/80">Authorized Editor</span>
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => setShowSettings(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full text-sm font-bold border border-white/5 transition-all hover:scale-105 active:scale-95"
-            >
-              <Share2 size={18} /> <span className="hidden sm:inline">Settings & Links</span>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full text-xs sm:text-sm font-bold border border-white/5 transition-all whitespace-nowrap"
+          >
+            <Share2 size={16} /> <span className="sm:inline">Settings</span>
+          </button>
+          <Link href={`/view/${boardId}`} target="_blank" className="flex-1 sm:flex-none">
+            <button className="w-full flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all whitespace-nowrap">
+              <ExternalLink size={16} className="sm:hidden" />
+              <span>View Page</span>
             </button>
-            <Link href={`/view/${boardId}`} target="_blank">
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all hover:scale-105 active:scale-95">
-                Open View Page
-              </button>
-            </Link>
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -400,42 +410,71 @@ export default function ControllerPage() {
       )}
 
       {/* Main Content Area - Flex Grow to Fill Screen */}
-      <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-12">
+      <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-12 scroll-smooth">
+
+        {/* Mobile Quick Jump / Navigation Bar */}
+        {data.activities.length > 1 && (
+          <div className="md:hidden sticky top-0 z-30 flex items-center gap-2 overflow-x-auto no-scrollbar py-3 px-4 bg-inherit/90 backdrop-blur-md border-b border-white/5">
+            <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] whitespace-nowrap mr-2">Jump To:</span>
+            {data.activities.map((act) => (
+              <a
+                key={act.id}
+                href={`#act-${act.id}`}
+                className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold text-white/60 whitespace-nowrap active:bg-violet-600 active:text-white transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById(`act-${act.id}`)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                {act.name}
+              </a>
+            ))}
+          </div>
+        )}
 
         {/* SUMMARY TABLE SECTION */}
         <div className="flex flex-col items-center">
           <div className="w-full max-w-7xl">
-            <h2 className="text-sm font-black text-white/30 uppercase tracking-[0.3em] mb-6 px-4">Scoresheet Summary</h2>
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl overflow-x-auto">
+            <h2 className="text-[10px] sm:text-sm font-black text-white/30 uppercase tracking-[0.3em] mb-4 sm:mb-6 px-4">Scoresheet Summary</h2>
+            <div className="bg-white/5 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/10 shadow-2xl overflow-x-auto relative no-scrollbar">
               <div className="min-w-max">
                 {/* Header */}
-                <div className="grid border-b border-white/5 bg-[#0a0a0a]/95"
-                  style={{ gridTemplateColumns: `280px 120px repeat(${data.activities.length}, 160px) 80px` }}>
-                  <div className="p-5 font-bold text-white/40 text-xs uppercase tracking-widest sticky left-0 bg-[#0a0a0a] z-20 border-r border-white/5">Teams</div>
-                  <div className="p-5 font-black text-violet-400 text-xs uppercase tracking-widest text-center border-l border-white/5 bg-violet-500/10 sticky left-[280px] z-20 border-r border-white/10">Grand Total</div>
+                <div className="grid border-b border-white/5 bg-[#0a0a0a]/95 sticky top-0 z-30"
+                  style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px) 70px` }}>
+
+                  {/* Sticky Team Header */}
+                  <div className="p-4 sm:p-5 font-bold text-white/40 text-[10px] sm:text-xs uppercase tracking-widest sticky left-0 bg-[#0a0a0a] z-40 border-r border-white/10">
+                    Teams
+                  </div>
+
+                  {/* Sticky Total Header */}
+                  <div className="p-4 sm:p-5 font-black text-violet-400 text-[10px] sm:text-xs uppercase tracking-widest text-center border-l border-white/5 bg-violet-500/10 sticky left-[160px] sm:left-[240px] z-40 border-r border-white/10">
+                    Total
+                  </div>
+
                   {data.activities.map(act => (
-                    <div key={act.id} className="p-4 border-l border-white/5 relative group flex items-center justify-center">
+                    <div key={act.id} className="p-3 sm:p-4 border-l border-white/5 relative group flex items-center justify-center">
                       {editingId === act.id ? (
                         <input
                           autoFocus
-                          className="w-full bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-sm font-bold text-center text-white outline-none"
+                          className="w-full bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-xs sm:text-sm font-bold text-center text-white outline-none"
                           defaultValue={act.name}
                           onBlur={(e) => updateName('activity', act.id, e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         />
                       ) : (
-                        <div onClick={() => act.subGames.length === 0 && setEditingId(act.id)} className="text-center cursor-pointer hover:bg-white/5 rounded py-1 px-3 w-full">
-                          <span className="text-xs font-bold text-white/60 uppercase tracking-wider block truncate">{act.name}</span>
+                        <div onClick={() => act.subGames.length === 0 && setEditingId(act.id)} className="text-center cursor-pointer hover:bg-white/5 rounded py-1 px-2 w-full truncate">
+                          <span className="text-[10px] sm:text-xs font-bold text-white/60 uppercase tracking-wider block">{act.name}</span>
                         </div>
                       )}
-                      <button onClick={() => deleteItem('activity', act.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1.5 text-white/20 hover:text-red-400 transition-colors">
-                        <Trash2 size={12} />
+                      <button onClick={() => deleteItem('activity', act.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 size={10} />
                       </button>
                     </div>
                   ))}
-                  <div className="p-2 flex items-center justify-center border-l border-white/5 sticky right-0 bg-[#0a0a0a] z-20">
+                  <div className="p-2 flex items-center justify-center border-l border-white/5 bg-[#0a0a0a]">
                     <button onClick={addActivity} className="p-2 hover:bg-white/10 text-violet-400 rounded-lg transition-colors" title="Add Activity">
-                      <Plus size={18} />
+                      <Plus size={16} />
                     </button>
                   </div>
                 </div>
@@ -443,41 +482,46 @@ export default function ControllerPage() {
                 {/* Body */}
                 {data.participants.map(p => (
                   <div key={p.id} className="grid border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                    style={{ gridTemplateColumns: `280px 120px repeat(${data.activities.length}, 160px) 80px` }}>
-                    <div className="p-5 flex items-center gap-4 sticky left-0 bg-[#050505] z-10 border-r border-white/5 shadow-lg">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-black text-white/40">{p.name.charAt(0)}</div>
+                    style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px) 70px` }}>
+
+                    {/* Sticky Team Name */}
+                    <div className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 sticky left-0 bg-[#050505] z-30 border-r border-white/10 shadow-lg">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-white/40 shrink-0">{p.name.charAt(0)}</div>
                       {editingId === p.id ? (
-                        <input autoFocus className="flex-1 bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-sm font-bold text-white outline-none"
+                        <input autoFocus className="flex-1 bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-xs sm:text-sm font-bold text-white outline-none"
                           defaultValue={p.name} onBlur={(e) => updateName('participant', p.id, e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
                       ) : (
-                        <span onClick={() => setEditingId(p.id)} className="font-bold text-white/80 cursor-pointer">{p.name}</span>
+                        <span onClick={() => setEditingId(p.id)} className="text-sm font-bold text-white/80 cursor-pointer truncate">{p.name}</span>
                       )}
                     </div>
-                    <div className="p-5 flex items-center justify-center bg-violet-500/5 sticky left-[280px] z-10 border-r border-white/10 shadow-lg">
-                      <span className="text-2xl font-black text-white">{getGrandTotal(p.id)}</span>
+
+                    {/* Sticky Total Value */}
+                    <div className="p-3 sm:p-5 flex items-center justify-center bg-violet-500/5 sticky left-[160px] sm:left-[240px] z-30 border-r border-white/10 shadow-lg">
+                      <span className="text-xl sm:text-2xl font-black text-white">{getGrandTotal(p.id)}</span>
                     </div>
+
                     {data.activities.map(act => (
-                      <div key={act.id} className="p-3 border-l border-white/5 flex items-center justify-center">
+                      <div key={act.id} className="p-2 sm:p-3 border-l border-white/5 flex items-center justify-center">
                         {act.subGames.length > 0 ? (
-                          <span className="text-lg font-bold text-white/50">{getActivityTotal(act.id, p.id)}</span>
+                          <span className="text-base sm:text-lg font-bold text-violet-400/50">{getActivityTotal(act.id, p.id)}</span>
                         ) : (
-                          <div className="flex items-center gap-2 bg-black/20 rounded-lg p-1 border border-white/5">
-                            <button onClick={() => updateActivityScore(act.id, p.id, -1)} className="w-6 h-6 hover:bg-white/10 rounded text-white/30 text-xs">-</button>
+                          <div className="flex items-center gap-1 sm:gap-2 bg-black/20 rounded-lg p-1 border border-white/5">
+                            <button onClick={() => updateActivityScore(act.id, p.id, -1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
                             {editingId === `score-${p.id}-${act.id}` ? (
-                              <input type="number" autoFocus className="w-12 bg-white/10 text-center font-bold text-white outline-none rounded"
+                              <input type="number" autoFocus className="w-10 sm:w-12 bg-white/10 text-center font-bold text-white outline-none rounded text-sm"
                                 defaultValue={act.directScores[p.id] || 0}
                                 onBlur={(e) => setActivityScore(act.id, p.id, e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
                             ) : (
-                              <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-12 text-center font-bold text-white cursor-text">{act.directScores[p.id] || 0}</span>
+                              <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-10 sm:w-12 text-center font-black text-white cursor-text text-sm">{act.directScores[p.id] || 0}</span>
                             )}
-                            <button onClick={() => updateActivityScore(act.id, p.id, 1)} className="w-6 h-6 hover:bg-white/10 rounded text-white/30 text-xs">+</button>
+                            <button onClick={() => updateActivityScore(act.id, p.id, 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
                           </div>
                         )}
                       </div>
                     ))}
-                    <div className="p-2 flex items-center justify-center border-l border-white/5 sticky right-0 bg-[#050505] z-10">
+                    <div className="p-2 flex items-center justify-center border-l border-white/5 bg-[#050505]">
                       <button onClick={() => deleteItem('participant', p.id)} className="p-2 text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
@@ -486,20 +530,23 @@ export default function ControllerPage() {
                 ))}
 
                 {/* Add Participant Row */}
-                <div className="p-4 border-t border-white/5 bg-white/[0.02]">
-                  <button onClick={addParticipant} className="w-full py-4 border border-dashed border-white/10 rounded-xl text-white/30 font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
-                    <UserPlus size={16} /> Add Team
+                <div className="p-3 sm:p-4 border-t border-white/5 bg-white/[0.02]">
+                  <button onClick={addParticipant} className="w-full py-3 sm:py-4 border border-dashed border-white/10 rounded-lg sm:rounded-xl text-white/30 font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 uppercase text-[10px] tracking-widest">
+                    <UserPlus size={14} /> Add Team
                   </button>
                 </div>
               </div>
             </div>
+            <p className="md:hidden text-[9px] text-white/20 mt-3 flex items-center gap-1.5 px-2">
+              <Info size={10} /> Swipe horizontal to see all rounds
+            </p>
           </div>
         </div>
 
         {/* INDIVIDUAL ACTIVITY SECTIONS */}
         <div className="max-w-7xl mx-auto space-y-16">
           {data.activities.map((act) => (
-            <section key={act.id} className="relative pt-8 group">
+            <section key={act.id} id={`act-${act.id}`} className="relative pt-8 group scroll-mt-24">
               <div className="flex items-center justify-between mb-8 px-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center font-black shadow-[0_0_20px_rgba(139,92,246,0.5)]">
@@ -519,57 +566,102 @@ export default function ControllerPage() {
               </div>
 
               {act.subGames.length > 0 ? (
-                <div className="bg-[#0a0a0a] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b border-white/5 bg-white/[0.02]">
-                          <th className="p-6 text-left text-xs font-black text-white/30 uppercase tracking-[0.2em] w-64">Sub-Game</th>
-                          {data.participants.map(p => (
-                            <th key={p.id} className="p-6 text-center text-xs font-black text-white/30 uppercase tracking-[0.2em]">{p.name}</th>
-                          ))}
-                          <th className="w-20"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {act.subGames.map((game) => (
-                          <tr key={game.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
-                            <td className="p-6">
-                              {editingId === game.id ? (
-                                <input autoFocus className="bg-white/5 border border-violet-500 items-center justify-center rounded px-3 py-1.5 text-sm font-bold text-white outline-none w-full"
-                                  defaultValue={game.name} onBlur={(e) => updateName('subgame', game.id, e.target.value, act.id)}
-                                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-                              ) : (
-                                <span onClick={() => setEditingId(game.id)} className="font-bold text-white cursor-pointer hover:text-violet-400">{game.name}</span>
-                              )}
-                            </td>
+                <>
+                  {/* Desktop View: Table */}
+                  <div className="hidden md:block bg-[#0a0a0a] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/5 bg-white/[0.02]">
+                            <th className="p-6 text-left text-xs font-black text-white/30 uppercase tracking-[0.2em] w-64">Sub-Game</th>
                             {data.participants.map(p => (
-                              <td key={p.id} className="p-6">
-                                <div className="flex flex-col items-center gap-2">
-                                  <div className="flex items-center justify-between w-32 bg-white/5 rounded-xl p-1.5 border border-white/10">
-                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, -1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">-</button>
-                                    <input type="number" className="w-12 bg-transparent text-center font-black text-white outline-none"
-                                      value={game.scores[p.id] || 0} onChange={(e) => setSubGameScore(act.id, game.id, p.id, e.target.value)} />
-                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">+</button>
-                                  </div>
-                                  <div className="flex gap-1 w-full justify-center">
-                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 10)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+10</button>
-                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 100)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+100</button>
-                                  </div>
-                                </div>
-                              </td>
+                              <th key={p.id} className="p-6 text-center text-xs font-black text-white/30 uppercase tracking-[0.2em]">{p.name}</th>
                             ))}
-                            <td className="p-4 text-center">
-                              <button onClick={() => deleteItem('subgame', game.id, act.id)} className="p-2 text-white/10 hover:text-red-400 transition-colors">
-                                <Trash2 size={16} />
-                              </button>
-                            </td>
+                            <th className="w-20"></th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {act.subGames.map((game) => (
+                            <tr key={game.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
+                              <td className="p-6">
+                                {editingId === game.id ? (
+                                  <input autoFocus className="bg-white/5 border border-violet-500 rounded px-3 py-1.5 text-sm font-bold text-white outline-none w-full"
+                                    defaultValue={game.name} onBlur={(e) => updateName('subgame', game.id, e.target.value, act.id)}
+                                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+                                ) : (
+                                  <span onClick={() => setEditingId(game.id)} className="font-bold text-white cursor-pointer hover:text-violet-400">{game.name}</span>
+                                )}
+                              </td>
+                              {data.participants.map(p => (
+                                <td key={p.id} className="p-6">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <div className="flex items-center justify-between w-32 bg-white/5 rounded-xl p-1.5 border border-white/10">
+                                      <button onClick={() => updateSubGameScore(act.id, game.id, p.id, -1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">-</button>
+                                      <input type="number" className="w-12 bg-transparent text-center font-black text-white outline-none"
+                                        value={game.scores[p.id] || 0} onChange={(e) => setSubGameScore(act.id, game.id, p.id, e.target.value)} />
+                                      <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">+</button>
+                                    </div>
+                                    <div className="flex gap-1 w-full justify-center">
+                                      <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 10)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+10</button>
+                                      <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 100)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+100</button>
+                                    </div>
+                                  </div>
+                                </td>
+                              ))}
+                              <td className="p-4 text-center">
+                                <button onClick={() => deleteItem('subgame', game.id, act.id)} className="p-2 text-white/10 hover:text-red-400 transition-colors">
+                                  <Trash2 size={16} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
+
+                  {/* Mobile View: Cards */}
+                  <div className="md:hidden space-y-4 px-2">
+                    {act.subGames.map((game) => (
+                      <div key={game.id} className="bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+                        <div className="p-4 flex items-center justify-between border-b border-white/5">
+                          {editingId === game.id ? (
+                            <input autoFocus className="bg-white/5 border border-violet-500 rounded px-3 py-1 text-sm font-bold text-white outline-none max-w-[200px]"
+                              defaultValue={game.name} onBlur={(e) => updateName('subgame', game.id, e.target.value, act.id)}
+                              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+                          ) : (
+                            <h4 onClick={() => setEditingId(game.id)} className="font-bold text-white text-base flex items-center gap-2">
+                              {game.name} <Edit3 size={12} className="text-white/20" />
+                            </h4>
+                          )}
+                          <button onClick={() => deleteItem('subgame', game.id, act.id)} className="p-2 text-white/20 hover:text-red-400">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                        <div className="p-4 divide-y divide-white/5">
+                          {data.participants.map(p => (
+                            <div key={p.id} className="py-4 first:pt-0 last:pb-0">
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-xs font-bold text-white/60 uppercase tracking-widest">{p.name}</span>
+                                <span className="text-xl font-black text-white px-3 py-1 bg-violet-500/10 rounded-lg">{game.scores[p.id] || 0}</span>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2">
+                                <button onClick={() => updateSubGameScore(act.id, game.id, p.id, -1)}
+                                  className="h-12 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center font-bold text-lg border border-white/5">-</button>
+                                <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 1)}
+                                  className="h-12 bg-violet-600/20 hover:bg-violet-600/40 rounded-xl flex items-center justify-center font-bold text-lg border border-violet-500/20">+</button>
+                                <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 10)}
+                                  className="h-12 bg-violet-600/20 hover:bg-violet-600/40 rounded-xl flex items-center justify-center font-bold text-xs border border-violet-500/20">+10</button>
+                                <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 100)}
+                                  className="h-12 bg-violet-600/20 hover:bg-violet-600/40 rounded-xl flex items-center justify-center font-bold text-xs border border-violet-500/20">+100</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
                 <div className="bg-white/[0.02] rounded-3xl border border-dashed border-white/10 p-12 flex flex-col items-center text-center">
                   <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
@@ -589,7 +681,7 @@ export default function ControllerPage() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }
