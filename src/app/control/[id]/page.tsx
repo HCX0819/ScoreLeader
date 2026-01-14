@@ -453,7 +453,7 @@ export default function ControllerPage() {
               <div className="min-w-max">
                 {/* Header */}
                 <div className="grid border-b border-white/5 bg-black/40 backdrop-blur-xl sticky top-0 z-30"
-                  style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px) 70px` }}>
+                  style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, minmax(140px, 1fr)) 70px` }}>
 
                   {/* Sticky Team Header */}
                   <div className="p-4 sm:p-5 font-bold text-white/40 text-[10px] sm:text-xs uppercase tracking-widest sticky left-0 bg-white/5 backdrop-blur-md z-40 border-r border-white/10">
@@ -495,7 +495,7 @@ export default function ControllerPage() {
                 {/* Body */}
                 {data.participants.map(p => (
                   <div key={p.id} className="grid border-b border-white/5 hover:bg-white/[0.02] transition-colors"
-                    style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px) 70px` }}>
+                    style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, minmax(140px, 1fr)) 70px` }}>
 
                     {/* Sticky Team Name */}
                     <div className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 sticky left-0 bg-white/10 backdrop-blur-xl z-30 border-r border-white/10 shadow-lg">
