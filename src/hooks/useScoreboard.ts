@@ -26,6 +26,7 @@ export interface ScoreboardData {
     activities: Activity[];
     logo?: string;
     backgroundColor?: string;
+    incrementButtons?: number[]; // Custom increment/decrement values, defaults to [5, 7, 10]
 }
 
 export interface Scoreboard {
@@ -60,7 +61,8 @@ export function useScoreboard(id: string | undefined | string[]) {
                     participants: Array.isArray(rawData.participants) ? rawData.participants : [],
                     activities: Array.isArray(rawData.activities) ? rawData.activities : [],
                     logo: rawData.logo,
-                    backgroundColor: rawData.backgroundColor || data.background_color
+                    backgroundColor: rawData.backgroundColor || data.background_color,
+                    incrementButtons: Array.isArray(rawData.incrementButtons) ? rawData.incrementButtons : undefined
                 };
 
                 // MIGRATION: If we have old 'columns', convert them to activities
@@ -122,7 +124,8 @@ export function useScoreboard(id: string | undefined | string[]) {
                                 participants: Array.isArray(rawData.participants) ? rawData.participants : [],
                                 activities: Array.isArray(rawData.activities) ? rawData.activities : [],
                                 logo: rawData.logo,
-                                backgroundColor: rawData.backgroundColor || newData.background_color
+                                backgroundColor: rawData.backgroundColor || newData.background_color,
+                                incrementButtons: Array.isArray(rawData.incrementButtons) ? rawData.incrementButtons : undefined
                             };
                             return { ...newData, data: safeData } as Scoreboard;
                         } else {

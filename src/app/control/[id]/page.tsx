@@ -7,7 +7,8 @@ import { useEffect, useState, useRef } from "react";
 import {
   Plus, Trash2, UserPlus, Columns, ChevronLeft,
   Settings, Share2, ArrowLeft, Upload, Image as ImageIcon,
-  Edit3, Lock, Check, Copy, ExternalLink, Activity, Info
+  Edit3, Lock, Check, Copy, ExternalLink, Activity, Info,
+  RotateCcw, X
 } from 'lucide-react';
 import Link from "next/link";
 import { compressImage } from "@/lib/image-compression";
@@ -26,6 +27,7 @@ export default function ControllerPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [copied, setCopied] = useState(false);
+  const [newIncrement, setNewIncrement] = useState("");
 
   // Authentication Check
   useEffect(() => {
@@ -125,6 +127,37 @@ export default function ControllerPage() {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  // --- Increment Buttons Helpers ---
+  const DEFAULT_INCREMENTS = [5, 7, 10];
+  const getIncrementButtons = () => data.incrementButtons || DEFAULT_INCREMENTS;
+
+  const addIncrementButton = async (value: number) => {
+    const current = getIncrementButtons();
+    // Validation: no duplicates, no zero, max 6, range -1000 to 1000
+    if (current.includes(value) || value === 0 || current.length >= 6 || value < -1000 || value > 1000) {
+      return false;
+    }
+    const updated = [...current, value].sort((a, b) => a - b);
+    const newData = { ...data, incrementButtons: updated };
+    await updateBoardData(newData);
+    return true;
+  };
+
+  const removeIncrementButton = async (value: number) => {
+    const current = getIncrementButtons();
+    // Validation: min 1 button
+    if (current.length <= 1) return false;
+    const updated = current.filter(v => v !== value);
+    const newData = { ...data, incrementButtons: updated };
+    await updateBoardData(newData);
+    return true;
+  };
+
+  const restoreDefaultIncrements = async () => {
+    const newData = { ...data, incrementButtons: [...DEFAULT_INCREMENTS] };
+    await updateBoardData(newData);
   };
 
   // ... (Existing updateScore, addParticipant, addColumn, updateName, deleteItem, calculateTotal logic - kept same)
@@ -417,6 +450,71 @@ export default function ControllerPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Increment Buttons Section */}
+                <div>
+                  <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-2">
+                    Increment Buttons
+                  </label>
+                  <p className="text-xs text-white/30 mb-4">Customize the score editing buttons.</p>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {getIncrementButtons().map(value => (
+                      <div
+                        key={value}
+                        className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 group"
+                      >
+                        <span className="text-sm font-bold text-white">
+                          {value > 0 ? `+${value}` : value}
+                        </span>
+                        {getIncrementButtons().length > 1 && (
+                          <button
+                            onClick={() => removeIncrementButton(value)}
+                            className="text-white/30 hover:text-red-400 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="number"
+                      placeholder="e.g. 25"
+                      value={newIncrement}
+                      onChange={(e) => setNewIncrement(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-violet-500/50 transition-colors w-24"
+                      min="-1000"
+                      max="1000"
+                    />
+                    <button
+                      onClick={async () => {
+                        const val = parseInt(newIncrement);
+                        if (!isNaN(val)) {
+                          const success = await addIncrementButton(val);
+                          if (success) setNewIncrement("");
+                        }
+                      }}
+                      disabled={getIncrementButtons().length >= 6}
+                      className="px-4 py-2 bg-violet-600 hover:bg-violet-500 disabled:bg-white/10 disabled:text-white/30 text-white rounded-lg text-sm font-bold transition-colors"
+                    >
+                      Add
+                    </button>
+                    <button
+                      onClick={restoreDefaultIncrements}
+                      className="flex items-center gap-1.5 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 hover:text-white rounded-lg text-xs font-bold transition-colors"
+                    >
+                      <RotateCcw size={12} />
+                      Defaults
+                    </button>
+                  </div>
+
+                  {getIncrementButtons().length >= 6 && (
+                    <p className="text-xs text-amber-400/70 mt-2">Maximum 6 buttons reached</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -521,7 +619,7 @@ export default function ControllerPage() {
                           <span className="text-base sm:text-lg font-bold text-violet-400/50">{getActivityTotal(act.id, p.id)}</span>
                         ) : (
                           <div className="flex items-center gap-1 sm:gap-2 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/5">
-                            <button onClick={() => updateActivityScore(act.id, p.id, -1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
+                            <button onClick={() => updateActivityScore(act.id, p.id, -(getIncrementButtons().find(v => v > 0) || 1))} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
                             {editingId === `score-${p.id}-${act.id}` ? (
                               <input type="number" autoFocus className="w-10 sm:w-12 bg-white/10 text-center font-bold text-white outline-none rounded text-sm"
                                 defaultValue={act.directScores[p.id] || 0}
@@ -530,7 +628,7 @@ export default function ControllerPage() {
                             ) : (
                               <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-10 sm:w-12 text-center font-black text-white cursor-text text-sm">{act.directScores[p.id] || 0}</span>
                             )}
-                            <button onClick={() => updateActivityScore(act.id, p.id, 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
+                            <button onClick={() => updateActivityScore(act.id, p.id, getIncrementButtons().find(v => v > 0) || 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
                           </div>
                         )}
                       </div>
@@ -615,9 +713,16 @@ export default function ControllerPage() {
                                         value={game.scores[p.id] || 0} onChange={(e) => setSubGameScore(act.id, game.id, p.id, e.target.value)} />
                                       <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">+</button>
                                     </div>
-                                    <div className="flex gap-1 w-full justify-center">
-                                      <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 10)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+10</button>
-                                      <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 100)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+100</button>
+                                    <div className="flex gap-1 w-full justify-center flex-wrap">
+                                      {getIncrementButtons().map(inc => (
+                                        <button
+                                          key={inc}
+                                          onClick={() => updateSubGameScore(act.id, game.id, p.id, inc)}
+                                          className={`px-2 py-1 text-[10px] rounded font-black transition-colors ${inc < 0 ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-violet-500/10 hover:bg-violet-500/20 text-violet-400'}`}
+                                        >
+                                          {inc > 0 ? `+${inc}` : inc}
+                                        </button>
+                                      ))}
                                     </div>
                                   </div>
                                 </td>
@@ -672,15 +777,20 @@ export default function ControllerPage() {
                                 <span className="text-xs font-bold text-white/60 uppercase tracking-widest">{p.name}</span>
                                 <span className="text-xl font-black text-white px-3 py-1 bg-violet-500/10 rounded-lg">{game.scores[p.id] || 0}</span>
                               </div>
-                              <div className="grid grid-cols-4 gap-2">
+                              <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(getIncrementButtons().length + 2, 4)}, 1fr)` }}>
                                 <button onClick={() => updateSubGameScore(act.id, game.id, p.id, -1)}
                                   className="h-12 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center font-bold text-lg border border-white/5">-</button>
                                 <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 1)}
                                   className="h-12 bg-violet-600/20 hover:bg-violet-600/40 rounded-xl flex items-center justify-center font-bold text-lg border border-violet-500/20">+</button>
-                                <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 10)}
-                                  className="h-12 bg-violet-600/20 hover:bg-violet-600/40 rounded-xl flex items-center justify-center font-bold text-xs border border-violet-500/20">+10</button>
-                                <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 100)}
-                                  className="h-12 bg-violet-600/20 hover:bg-violet-600/40 rounded-xl flex items-center justify-center font-bold text-xs border border-violet-500/20">+100</button>
+                                {getIncrementButtons().map(inc => (
+                                  <button
+                                    key={inc}
+                                    onClick={() => updateSubGameScore(act.id, game.id, p.id, inc)}
+                                    className={`h-12 rounded-xl flex items-center justify-center font-bold text-xs border ${inc < 0 ? 'bg-red-600/20 hover:bg-red-600/40 border-red-500/20' : 'bg-violet-600/20 hover:bg-violet-600/40 border-violet-500/20'}`}
+                                  >
+                                    {inc > 0 ? `+${inc}` : inc}
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           ))}
