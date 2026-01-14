@@ -54,6 +54,7 @@
 - [x] **2. Sharing & Access Control**
     - [x] Enable sharing for view-only mode.
     - [x] Distinguish between Staff (edit) and Participants (view).
+    - [x] Add "Share" button to the Live View (spectator) page.
 
 ---
 

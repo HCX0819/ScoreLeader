@@ -303,6 +303,10 @@ export default function ControllerPage() {
       {/* Header - Navigation & Control */}
       <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-white/5 py-4 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <Link href="/" className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors">
+            <ArrowLeft size={20} />
+          </Link>
+          <div className="h-6 w-[1px] bg-white/5 mx-2" />
           <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full">
             <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
             <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">

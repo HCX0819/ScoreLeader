@@ -3,13 +3,23 @@
 import { useParams } from "next/navigation";
 import { useScoreboard, Participant } from "@/hooks/useScoreboard";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Activity, Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { Trophy, Activity, Loader2, Share2, Copy, Check } from 'lucide-react';
 
 export default function ViewBoardPage() {
     const params = useParams();
     const rawId = params?.id;
     const boardId = Array.isArray(rawId) ? rawId[0] : rawId;
     const board = useScoreboard(boardId);
+    const [copied, setCopied] = useState(false);
+
+    const copyLink = () => {
+        if (typeof window !== 'undefined') {
+            navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
 
     if (!boardId) return null;
 
@@ -78,21 +88,38 @@ export default function ViewBoardPage() {
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-8 sm:gap-12 text-center">
-                    <div>
-                        <div className="text-white/20 font-black text-3xl sm:text-5xl tabular-nums tracking-tighter leading-none mb-1">
-                            {sortedParticipants.length}
-                        </div>
-                        <div className="text-white/40 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Teams</div>
-                    </div>
-                    {data.activities.length > 0 && (
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-6 sm:gap-10">
+                    <div className="flex gap-8 sm:gap-12 text-center">
                         <div>
                             <div className="text-white/20 font-black text-3xl sm:text-5xl tabular-nums tracking-tighter leading-none mb-1">
-                                {data.activities.length}
+                                {sortedParticipants.length}
                             </div>
-                            <div className="text-white/40 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Rounds</div>
+                            <div className="text-white/40 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Teams</div>
                         </div>
-                    )}
+                        {data.activities.length > 0 && (
+                            <div>
+                                <div className="text-white/20 font-black text-3xl sm:text-5xl tabular-nums tracking-tighter leading-none mb-1">
+                                    {data.activities.length}
+                                </div>
+                                <div className="text-white/40 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Rounds</div>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={copyLink}
+                        className={`group relative flex items-center gap-2 px-5 py-3 rounded-2xl border transition-all duration-300
+                            ${copied ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                                : 'bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/20 hover:scale-105 active:scale-95 shadow-xl'}`}
+                    >
+                        {copied ? <Check size={18} /> : <Share2 size={18} />}
+                        <span className="text-[10px] font-black uppercase tracking-widest">
+                            {copied ? 'Copied!' : 'Share'}
+                        </span>
+                        {!copied && (
+                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-violet-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(139,92,246,1)]" />
+                        )}
+                    </button>
                 </div>
             </header>
 
