@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Plus, Layout, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Plus, Layout, MoreHorizontal, Loader2, Edit2, Image as ImageIcon, X, Trash2, ExternalLink } from 'lucide-react';
+import { compressImage } from "@/lib/image-compression";
 
 interface BoardSummary {
   id: string;
@@ -17,6 +18,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  // Edit Modal State
+  const [editingBoard, setEditingBoard] = useState<BoardSummary | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editLogo, setEditLogo] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -38,12 +46,13 @@ export default function Dashboard() {
     // Initialize with a default structure
     const defaultData = {
       participants: [
-        { id: crypto.randomUUID(), name: 'Team A', scores: {} },
-        { id: crypto.randomUUID(), name: 'Team B', scores: {} }
+        { id: crypto.randomUUID(), name: 'Team A' },
+        { id: crypto.randomUUID(), name: 'Team B' }
       ],
-      columns: [
-        { id: crypto.randomUUID(), name: 'Score' }
-      ]
+      activities: [
+        { id: crypto.randomUUID(), name: 'ROUND 1', subGames: [], directScores: {} }
+      ],
+      backgroundColor: '#0f172a'
     };
 
     const { data, error } = await supabase
@@ -86,6 +95,57 @@ export default function Dashboard() {
     }
   };
 
+  const handleUpdateBoard = async () => {
+    if (!editingBoard) return;
+    setIsUpdating(true);
+
+    try {
+      // Fetch current data to preserve other fields
+      const { data: currentBoard } = await supabase
+        .from('scoreboards')
+        .select('data')
+        .eq('id', editingBoard.id)
+        .single();
+
+      const updatedData = {
+        ...(currentBoard?.data || {}),
+        logo: editLogo
+      };
+
+      const { error } = await supabase
+        .from('scoreboards')
+        .update({
+          title: editTitle,
+          data: updatedData
+        })
+        .eq('id', editingBoard.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setBoards(boards.map(b => b.id === editingBoard.id ? { ...b, title: editTitle, data: updatedData } : b));
+      setEditingBoard(null);
+    } catch (error) {
+      console.error("Error updating board:", error);
+      alert("Failed to update board info");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const base64 = await compressImage(file);
+      setEditLogo(base64);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to process image");
+    }
+  };
+
   const getTimeAgo = (dateString: string) => {
     if (!dateString) return 'recently';
     const date = new Date(dateString);
@@ -103,14 +163,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-violet-500/30 font-sans" onClick={() => setMenuOpenId(null)}>
+    <div className="min-h-screen bg-[#0b1220] text-white selection:bg-violet-500/30 font-sans" onClick={() => setMenuOpenId(null)}>
 
       {/* Background Glow */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_10%,_rgba(120,40,200,0.15),_transparent_50%)] pointer-events-none" />
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_10%,_rgba(120,40,200,0.22),_transparent_55%)] pointer-events-none" />
 
       {/* Top Navigation */}
       {/* Top Navigation */}
-      <nav className="sticky top-0 z-50 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center border-b border-white/5 bg-[#050505] shadow-lg">
+      <nav className="sticky top-0 z-50 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center border-b border-white/10 bg-[#0b1220]/90 shadow-lg backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-end justify-center pb-1.5 gap-[2px] shadow-[0_0_15px_rgba(250,204,21,0.3)]">
             <div className="w-[3px] h-2.5 bg-black/40 rounded-t-sm" />
@@ -141,7 +201,7 @@ export default function Dashboard() {
           <button
             onClick={(e) => { e.stopPropagation(); createNewBoard(); }}
             disabled={creating}
-            className="group relative px-4 sm:px-6 py-2.5 sm:py-3 bg-violet-600 rounded-full font-bold text-sm text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2 overflow-hidden"
+            className="group relative px-4 sm:px-6 py-2.5 sm:py-3 bg-violet-600 rounded-full font-bold text-sm text-white shadow-[0_0_20px_rgba(139,92,246,0.25)] hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:scale-105 active:scale-95 transition-all duration-300 flex items-center gap-2 overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-fuchsia-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <div className="relative flex items-center gap-2">
@@ -154,7 +214,7 @@ export default function Dashboard() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-40 bg-white/5 rounded-2xl border border-white/5 animate-pulse" />
+              <div key={i} className="h-40 bg-white/10 rounded-2xl border border-white/10 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -163,7 +223,7 @@ export default function Dashboard() {
               <div
                 key={board.id}
                 onClick={() => router.push(`/control/${board.id}`)}
-                className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 p-6 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-2xl hover:-translate-y-1"
+                className="group relative bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/25 p-6 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-md shadow-lg hover:shadow-2xl hover:-translate-y-1"
               >
                 <div className="flex items-start justify-between mb-6">
                   {/* Logo Thumbnail */}
@@ -187,9 +247,35 @@ export default function Dashboard() {
                     {menuOpenId === board.id && (
                       <div className="absolute right-0 top-full mt-2 w-48 bg-[#0a0a0a] rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] border border-white/10 z-20 py-1 overflow-hidden backdrop-blur-xl">
                         <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingBoard(board);
+                            setEditTitle(board.title || "");
+                            setEditLogo(board.data?.logo || "");
+                            setMenuOpenId(null);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                        >
+                          <Edit2 size={14} />
+                          Edit Board Info
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`/view/${board.id}`, '_blank');
+                            setMenuOpenId(null);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-colors flex items-center gap-2"
+                        >
+                          <ExternalLink size={14} />
+                          Open Live View
+                        </button>
+                        <div className="h-[1px] bg-white/5 mx-2" />
+                        <button
                           onClick={(e) => deleteBoard(board.id, e)}
                           className="w-full text-left px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center gap-2"
                         >
+                          <Trash2 size={14} />
                           Delete Board
                         </button>
                       </div>
@@ -231,6 +317,86 @@ export default function Dashboard() {
         )}
 
       </main>
+      {/* Edit Board Modal */}
+      {editingBoard && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEditingBoard(null)} />
+
+          <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black text-white italic">Edit Board Info</h2>
+              <button
+                onClick={() => setEditingBoard(null)}
+                className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Title Input */}
+              <div>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Board Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Enter board title..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/10 focus:outline-none focus:border-violet-500/50 transition-colors"
+                />
+              </div>
+
+              {/* Logo Upload */}
+              <div>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Board Logo</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                    {editLogo ? (
+                      <img src={editLogo} alt="Preview" className="w-full h-full object-contain" />
+                    ) : (
+                      <ImageIcon className="text-white/10" size={32} />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <label className="block">
+                      <span className="sr-only">Choose logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="block w-full text-sm text-white/40
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-xs file:font-bold
+                          file:bg-violet-600 file:text-white
+                          hover:file:bg-violet-700
+                          cursor-pointer"
+                      />
+                    </label>
+                    <button
+                      onClick={() => setEditLogo("")}
+                      className="text-[10px] font-bold text-red-400/50 hover:text-red-400 transition-colors uppercase tracking-widest"
+                    >
+                      Remove Logo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={handleUpdateBoard}
+                  disabled={isUpdating}
+                  className="w-full py-4 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl font-black text-white italic tracking-wider shadow-[0_10px_30px_rgba(139,92,246,0.3)] transition-all flex items-center justify-center gap-2"
+                >
+                  {isUpdating ? <Loader2 className="animate-spin" size={20} /> : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
