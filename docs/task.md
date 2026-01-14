@@ -13,8 +13,10 @@
 - [ ] **4. Score Editing & Flexibility**
     - [ ] Implement configurable score denomination (increment/decrement values).
     - [ ] Retain double-click manual score editing.
-- [ ] **5. Score Breakdown & Tracking**
-    - [ ] Redesign score details using a nested table structure.
-    - [ ] Implement history/tracking for score changes.
+- [/] **5. Score Breakdown & Tracking (PRIORITY)**
+    - [ ] Refactor `ScoreboardData` schema (Board -> Activity -> Game).
+    - [ ] Implement "Direct Edit" logic for Activities with no games.
+    - [ ] Implement "Sum of Sums" logic for nested Activities.
+    - [ ] Update `ControllerPage` with Summary + Sub-Table UI.
 - [ ] **6. Customization**
     - [ ] Allow user to change the background color.

@@ -22,122 +22,233 @@ export default function ViewBoardPage() {
         );
     }
 
-    const data = board.data || { participants: [], columns: [] };
+    const data = board.data || { participants: [], activities: [] };
 
-    // Calculate totals and sort
-    const getParticipantTotal = (p: Participant) => Object.values(p.scores).reduce((a, b) => a + b, 0);
+    // --- Helper Calculations ---
+    const getActivityTotal = (activityId: string, participantId: string) => {
+        const activity = data.activities.find(a => a.id === activityId);
+        if (!activity) return 0;
+        if (activity.subGames.length === 0) return activity.directScores[participantId] || 0;
+        return activity.subGames.reduce((sum, game) => sum + (game.scores[participantId] || 0), 0);
+    };
+
+    const getGrandTotal = (participantId: string) => {
+        return data.activities.reduce((sum, activity) => sum + getActivityTotal(activity.id, participantId), 0);
+    };
 
     const sortedParticipants = [...data.participants].sort((a, b) => {
-        return getParticipantTotal(b) - getParticipantTotal(a);
+        return getGrandTotal(b.id) - getGrandTotal(a.id);
     });
 
     return (
-        <main className="min-h-screen bg-[#0f172a] text-white overflow-hidden relative">
+        <main
+            className="min-h-screen text-white overflow-y-auto relative selection:bg-violet-500/30 transition-colors duration-700"
+            style={{ backgroundColor: board.background_color || '#050505' }}
+        >
             {/* Dynamic Background */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-violet-600/20 blur-[150px] rounded-full" />
-                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/20 blur-[150px] rounded-full" />
+            <div className="fixed inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-600/10 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-fuchsia-600/10 blur-[120px] rounded-full" />
+                <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-indigo-600/10 blur-[120px] rounded-full" />
             </div>
 
             {/* Header */}
-            <header className="relative z-10 px-8 py-8 flex justify-between items-end border-b border-white/5 bg-black/20 backdrop-blur-sm">
-                <div className="flex items-center gap-6">
+            <header className="relative z-10 px-6 sm:px-12 py-10 flex flex-col md:flex-row justify-between items-center md:items-end gap-8 border-b border-white/5 bg-black/40 backdrop-blur-xl">
+                <div className="flex flex-col md:flex-row items-center gap-8">
                     {/* Logo Display */}
                     {data.logo && (
-                        <div className="w-20 h-20 bg-white/10 rounded-xl flex items-center justify-center p-2 backdrop-blur-sm border border-white/10 shadow-lg">
-                            <img src={data.logo} alt="Board Logo" className="w-full h-full object-contain filter drop-shadow hover:scale-105 transition-transform" />
+                        <div className="w-24 h-24 bg-white/5 rounded-2xl flex items-center justify-center p-3 backdrop-blur-md border border-white/10 shadow-2xl relative group">
+                            <div className="absolute inset-0 bg-violet-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <img src={data.logo} alt="Board Logo" className="w-full h-full object-contain relative z-10" />
                         </div>
                     )}
 
-                    <div>
-                        <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-2">
+                    <div className="text-center md:text-left">
+                        <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white mb-3 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
                             {board.title}
                         </h1>
-                        <div className="flex items-center gap-2 text-violet-400 font-mono text-xs tracking-widest uppercase">
+                        <div className="flex items-center justify-center md:justify-start gap-3 text-violet-400 font-black text-xs tracking-[0.3em] uppercase">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.8)]"></span>
                             </span>
                             Live Leaderboard
                         </div>
                     </div>
                 </div>
-                <div className="text-right hidden md:block">
-                    <div className="text-white/20 font-bold text-5xl tabular-nums tracking-tighter">
-                        {sortedParticipants.length}
+                <div className="flex gap-12 text-center">
+                    <div>
+                        <div className="text-white/20 font-black text-5xl tabular-nums tracking-tighter leading-none mb-1">
+                            {sortedParticipants.length}
+                        </div>
+                        <div className="text-white/40 text-[10px] font-black uppercase tracking-widest">Teams</div>
                     </div>
-                    <div className="text-white/40 text-xs font-mono uppercase tracking-widest">Participants</div>
+                    {data.activities.length > 0 && (
+                        <div>
+                            <div className="text-white/20 font-black text-5xl tabular-nums tracking-tighter leading-none mb-1">
+                                {data.activities.length}
+                            </div>
+                            <div className="text-white/40 text-[10px] font-black uppercase tracking-widest">Activities</div>
+                        </div>
+                    )}
                 </div>
             </header>
 
-            {/* Leaderboard Table */}
-            <div className="relative z-10 p-6 md:p-12 overflow-x-auto">
-                <div className="min-w-[800px] border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02] backdrop-blur-md shadow-2xl">
+            {/* Main Content Sections */}
+            <div className="relative z-10 max-w-7xl mx-auto p-6 md:p-12 space-y-24">
 
-                    {/* Table Header */}
-                    <div className="grid bg-black/40 text-white/40 font-bold text-xs uppercase tracking-widest border-b border-white/5"
-                        style={{ gridTemplateColumns: `80px 300px 150px repeat(${data.columns.length}, 1fr)` }}>
-                        <div className="p-6 text-center">Rank</div>
-                        <div className="p-6">Participant</div>
-                        <div className="p-6 text-center text-white/80 bg-white/5">Total</div>
-                        {data.columns.map(col => (
-                            <div key={col.id} className="p-6 text-center border-l border-white/5">
-                                {col.name}
-                            </div>
-                        ))}
+                {/* SUMMARY SECTION */}
+                <section>
+                    <div className="flex items-center gap-3 mb-8 px-4">
+                        <Activity size={20} className="text-violet-500" />
+                        <h2 className="text-xs font-black text-white/30 uppercase tracking-[0.4em]">Scoresheet Summary</h2>
                     </div>
 
-                    {/* Rows */}
-                    <div className="relative">
-                        <AnimatePresence>
-                            {sortedParticipants.map((participant, index) => (
-                                <motion.div
-                                    key={participant.id}
-                                    layoutId={participant.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ type: "spring", stiffness: 50, damping: 20 }}
-                                    className={`grid items-center border-b border-white/5 hover:bg-white/[0.03] transition-colors
-                        ${index === 0 ? 'bg-gradient-to-r from-yellow-500/10 to-transparent' : ''}
-                        ${index === 1 ? 'bg-gradient-to-r from-slate-400/10 to-transparent' : ''}
-                        ${index === 2 ? 'bg-gradient-to-r from-orange-700/10 to-transparent' : ''}
-                    `}
-                                    style={{ gridTemplateColumns: `80px 300px 150px repeat(${data.columns.length}, 1fr)` }}
-                                >
-
-                                    {/* Rank */}
-                                    <div className="p-6 text-center font-black text-2xl text-white/20 font-mono">
-                                        {index + 1}
-                                        {index === 0 && <Trophy className="inline-block ml-2 text-yellow-500 mb-1" size={16} />}
-                                    </div>
-
-                                    {/* Name */}
-                                    <div className="p-6">
-                                        <h3 className={`font-bold text-lg tracking-tight ${index === 0 ? 'text-yellow-400' : 'text-white'}`}>
-                                            {participant.name}
-                                        </h3>
-                                    </div>
-
-                                    {/* Total Score */}
-                                    <div className="p-6 text-center font-black text-3xl tabular-nums text-white bg-white/5 h-full flex items-center justify-center border-l border-r border-white/5 shadow-inner">
-                                        {getParticipantTotal(participant)}
-                                    </div>
-
-                                    {/* Column Scores */}
-                                    {data.columns.map(col => (
-                                        <div key={col.id} className="p-6 text-center text-xl font-medium text-white/60 tabular-nums border-l border-white/5">
-                                            {participant.scores[col.id] || 0}
+                    <div className="border border-white/10 rounded-3xl overflow-hidden bg-white/[0.02] backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                        <div className="overflow-x-auto">
+                            <div className="min-w-max">
+                                {/* Table Header */}
+                                <div className="grid bg-black/60 text-white/30 font-black text-[10px] uppercase tracking-[0.2em] border-b border-white/10"
+                                    style={{ gridTemplateColumns: `100px 300px 160px repeat(${data.activities.length}, 180px)` }}>
+                                    <div className="p-6 text-center border-r border-white/5 bg-black/40 sticky left-0 z-20">Rank</div>
+                                    <div className="p-6 border-r border-white/5 bg-black/40 sticky left-[100px] z-20">Team Name</div>
+                                    <div className="p-6 text-center text-violet-400 bg-violet-500/10 border-r border-white/10 sticky left-[400px] z-20">Grand Total</div>
+                                    {data.activities.map(act => (
+                                        <div key={act.id} className="p-6 text-center border-l border-white/5">
+                                            {act.name}
                                         </div>
                                     ))}
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                    </div>
+                                </div>
 
-                </div>
+                                {/* Table Body */}
+                                <div className="relative">
+                                    <AnimatePresence>
+                                        {sortedParticipants.map((p, index) => (
+                                            <motion.div
+                                                key={p.id}
+                                                layoutId={p.id}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                                                className={`grid items-center border-b border-white/5 hover:bg-white/[0.03] transition-colors relative group
+                                                    ${index === 0 ? 'bg-gradient-to-r from-yellow-500/[0.08] to-transparent' : ''}
+                                                    ${index === 1 ? 'bg-gradient-to-r from-slate-400/[0.08] to-transparent' : ''}
+                                                    ${index === 2 ? 'bg-gradient-to-r from-orange-700/[0.08] to-transparent' : ''}
+                                                `}
+                                                style={{ gridTemplateColumns: `100px 300px 160px repeat(${data.activities.length}, 180px)` }}
+                                            >
+                                                {/* Rank */}
+                                                <div className="p-6 text-center flex items-center justify-center sticky left-0 z-10 bg-inherit border-r border-white/5">
+                                                    <span className={`text-3xl font-black font-mono tracking-tighter
+                                                        ${index === 0 ? 'text-yellow-500' :
+                                                            index === 1 ? 'text-slate-400' :
+                                                                index === 2 ? 'text-orange-600' : 'text-white/10'}
+                                                    `}>
+                                                        {index + 1}
+                                                    </span>
+                                                    {index === 0 && <Trophy className="absolute top-2 right-2 text-yellow-500/50" size={14} />}
+                                                </div>
+
+                                                {/* Team Name */}
+                                                <div className="p-6 sticky left-[100px] z-10 bg-inherit border-r border-white/5">
+                                                    <h3 className={`font-black text-xl tracking-tight transition-colors ${index === 0 ? 'text-yellow-100' : 'text-white/90'}`}>
+                                                        {p.name}
+                                                    </h3>
+                                                </div>
+
+                                                {/* Grand Total */}
+                                                <div className="p-6 text-center bg-violet-500/[0.08] h-full flex items-center justify-center border-r border-white/10 sticky left-[400px] z-10">
+                                                    <span className="text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                                                        {getGrandTotal(p.id)}
+                                                    </span>
+                                                </div>
+
+                                                {/* Activity Scores */}
+                                                {data.activities.map(act => (
+                                                    <div key={act.id} className="p-6 text-center text-2xl font-black text-white/50 tabular-nums border-l border-white/5 group-hover:text-white/80 transition-colors">
+                                                        {getActivityTotal(act.id, p.id)}
+                                                    </div>
+                                                ))}
+                                            </motion.div>
+                                        ))}
+                                    </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* DETAILED ACTIVITY BREAKDOWNS */}
+                {data.activities.filter(a => a.subGames.length > 0).map((act) => (
+                    <section key={act.id} className="space-y-8">
+                        <div className="flex items-center justify-between px-4">
+                            <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 flex items-center justify-center text-2xl font-black shadow-[0_10px_30px_rgba(139,92,246,0.4)]">
+                                    {act.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h2 className="text-3xl font-black text-white tracking-tight">{act.name}</h2>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Detailed Point Breakdown</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-[#0a0a0a]/60 backdrop-blur-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/5 bg-white/[0.03]">
+                                            <th className="p-8 text-left text-[10px] font-black text-white/20 uppercase tracking-[0.3em] w-80">Sub-Game</th>
+                                            {data.participants.map(p => (
+                                                <th key={p.id} className="p-8 text-center text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">
+                                                    {p.name}
+                                                </th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {act.subGames.map((game, gIdx) => (
+                                            <tr key={game.id} className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors ${gIdx % 2 === 0 ? 'bg-white/[0.01]' : ''}`}>
+                                                <td className="p-8">
+                                                    <span className="text-lg font-black text-white/60 tracking-tight">{game.name}</span>
+                                                </td>
+                                                {data.participants.map(p => (
+                                                    <td key={p.id} className="p-8 text-center">
+                                                        <span className="text-3xl font-black text-white tabular-nums drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]">
+                                                            {game.scores[p.id] || 0}
+                                                        </span>
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr className="bg-violet-500/5">
+                                            <td className="p-8">
+                                                <span className="text-xs font-black text-violet-400 uppercase tracking-widest">Activity Total</span>
+                                            </td>
+                                            {data.participants.map(p => (
+                                                <td key={p.id} className="p-8 text-center">
+                                                    <span className="text-3xl font-black text-violet-400 tabular-nums">
+                                                        {getActivityTotal(act.id, p.id)}
+                                                    </span>
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </section>
+                ))}
             </div>
 
+            {/* Footer Attribution */}
+            <footer className="relative z-10 py-12 px-6 text-center border-t border-white/5 mt-12 bg-black">
+                <p className="text-white/10 text-[10px] font-black uppercase tracking-[0.5em] hover:text-white/30 transition-colors cursor-default">
+                    Powered by ScoreTag Live
+                </p>
+            </footer>
         </main>
     );
 }

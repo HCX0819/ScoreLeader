@@ -3,20 +3,27 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-export interface Participant {
+export interface SubGame {
     id: string;
     name: string;
-    scores: Record<string, number>;
+    scores: Record<string, number>; // participantId -> value
 }
 
-export interface ScoreColumn {
+export interface Activity {
+    id: string;
+    name: string;
+    subGames: SubGame[];
+    directScores: Record<string, number>; // participantId -> value (used if subGames is empty)
+}
+
+export interface Participant {
     id: string;
     name: string;
 }
 
 export interface ScoreboardData {
     participants: Participant[];
-    columns: ScoreColumn[];
+    activities: Activity[];
     logo?: string;
 }
 
@@ -25,6 +32,7 @@ export interface Scoreboard {
     title: string;
     data: ScoreboardData;
     pin?: string;
+    background_color?: string;
     created_at?: string;
     timer_seconds?: number; // Keeping for potential timer usage
 }
@@ -45,13 +53,36 @@ export function useScoreboard(id: string | undefined | string[]) {
                 .single();
 
             if (data) {
-                // Ensure data structure exists and has required arrays
+                // Ensure data structure exists and handle migration
                 const rawData = data.data || {};
                 const safeData: ScoreboardData = {
                     participants: Array.isArray(rawData.participants) ? rawData.participants : [],
-                    columns: Array.isArray(rawData.columns) ? rawData.columns : [],
+                    activities: Array.isArray(rawData.activities) ? rawData.activities : [],
                     logo: rawData.logo
                 };
+
+                // MIGRATION: If we have old 'columns', convert them to activities
+                if (Array.isArray(rawData.columns) && safeData.activities.length === 0) {
+                    safeData.activities = rawData.columns.map((col: any) => ({
+                        id: col.id,
+                        name: col.name,
+                        subGames: [],
+                        directScores: {}
+                    }));
+
+                    // Move existing participant scores into directScores
+                    safeData.participants.forEach((p: any) => {
+                        if (p.scores) {
+                            Object.entries(p.scores).forEach(([colId, val]) => {
+                                const activity = safeData.activities.find(a => a.id === colId);
+                                if (activity) {
+                                    activity.directScores[p.id] = val as number;
+                                }
+                            });
+                        }
+                    });
+                }
+
                 setBoard({ ...data, data: safeData });
             }
             if (error) console.error("Error fetching board:", error.message);
@@ -87,7 +118,7 @@ export function useScoreboard(id: string | undefined | string[]) {
                             const rawData = incomingData || {};
                             const safeData: ScoreboardData = {
                                 participants: Array.isArray(rawData.participants) ? rawData.participants : [],
-                                columns: Array.isArray(rawData.columns) ? rawData.columns : [],
+                                activities: Array.isArray(rawData.activities) ? rawData.activities : [],
                                 logo: rawData.logo
                             };
                             return { ...newData, data: safeData } as Scoreboard;
