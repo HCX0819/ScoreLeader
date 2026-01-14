@@ -564,10 +564,10 @@ export default function ControllerPage() {
               <div className="flex items-center justify-between mb-8 px-4">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center font-black shadow-[0_0_20px_rgba(139,92,246,0.5)]">
-                    {act.name.charAt(0)}
+                    {act.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <h3 className="text-2xl font-black text-white tracking-tight">{act.name}</h3>
+                    <h3 className="text-2xl font-black text-white tracking-tight uppercase">{act.name}</h3>
                     <p className="text-xs text-white/30 font-bold uppercase tracking-widest">Breakdown & Details</p>
                   </div>
                 </div>
