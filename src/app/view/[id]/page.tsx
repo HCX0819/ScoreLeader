@@ -84,7 +84,7 @@ export default function ViewBoardPage() {
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.8)]"></span>
                                 </span>
-                                LIVE VIEW ● VIEW ONLY
+                                LIVE VIEW
                             </span>
                         </div>
                     </div>
@@ -102,7 +102,7 @@ export default function ViewBoardPage() {
                                 <div className="text-white/20 font-black text-3xl sm:text-5xl tabular-nums tracking-tighter leading-none mb-1">
                                     {data.activities.length}
                                 </div>
-                                <div className="text-white/40 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Rounds</div>
+                            <div className="text-white/40 text-[8px] sm:text-[10px] font-black uppercase tracking-widest">Activities</div>
                             </div>
                         )}
                     </div>
