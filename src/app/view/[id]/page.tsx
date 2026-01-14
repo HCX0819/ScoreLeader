@@ -15,7 +15,7 @@ export default function ViewBoardPage() {
 
     if (!board) {
         return (
-            <div className="min-h-screen bg-[#0f172a] text-white flex flex-col items-center justify-center gap-4">
+            <div className="min-h-screen bg-[#050505] text-white flex flex-col items-center justify-center gap-4">
                 <Loader2 className="animate-spin text-violet-500" size={40} />
                 <p className="text-white/40 font-mono text-xs uppercase tracking-[0.2em]">Connecting to Live Feed...</p>
             </div>
@@ -42,8 +42,8 @@ export default function ViewBoardPage() {
 
     return (
         <main
-            className="min-h-screen text-white overflow-y-auto relative selection:bg-violet-500/30 transition-colors duration-700"
-            style={{ backgroundColor: board.background_color || '#050505' }}
+            className="min-h-screen text-white overflow-y-auto relative selection:bg-violet-500/30 transition-colors duration-200"
+            style={{ backgroundColor: data.backgroundColor || '#0f172a' }}
         >
             {/* Dynamic Background */}
             <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -53,7 +53,7 @@ export default function ViewBoardPage() {
             </div>
 
             {/* Header - Adaptive Padding and Flex */}
-            <header className="relative z-10 px-4 sm:px-12 py-6 sm:py-10 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 sm:gap-8 border-b border-white/5 bg-black/40 backdrop-blur-xl">
+            <header className="relative z-10 px-4 sm:px-12 py-6 sm:py-10 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 sm:gap-8 border-b border-white/5 bg-white/5 backdrop-blur-xl">
                 <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-8 w-full md:w-auto">
                     {/* Logo Display */}
                     {data.logo && (
@@ -151,7 +151,7 @@ export default function ViewBoardPage() {
                                                 style={{ gridTemplateColumns: `70px minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px)` }}
                                             >
                                                 {/* Rank */}
-                                                <div className="p-4 sm:p-6 text-center flex items-center justify-center sticky left-0 z-20 bg-[#050505] border-r border-white/10 shadow-xl">
+                                                <div className="p-4 sm:p-6 text-center flex items-center justify-center sticky left-0 z-20 bg-white/10 backdrop-blur-md border-r border-white/10 shadow-xl">
                                                     <span className={`text-xl sm:text-3xl font-black font-mono tracking-tighter
                                                         ${index === 0 ? 'text-yellow-500' :
                                                             index === 1 ? 'text-slate-400' :
@@ -163,14 +163,14 @@ export default function ViewBoardPage() {
                                                 </div>
 
                                                 {/* Team Name */}
-                                                <div className="p-4 sm:p-6 sticky left-[70px] z-20 bg-[#050505] border-r border-white/10 shadow-xl">
+                                                <div className="p-4 sm:p-6 sticky left-[70px] z-20 bg-white/10 backdrop-blur-md border-r border-white/10 shadow-xl">
                                                     <h3 className={`font-black text-sm sm:text-xl tracking-tight transition-colors truncate ${index === 0 ? 'text-yellow-100' : 'text-white/90'}`}>
                                                         {p.name}
                                                     </h3>
                                                 </div>
 
                                                 {/* Grand Total */}
-                                                <div className="p-4 sm:p-6 text-center bg-violet-500/[0.08] h-full flex items-center justify-center border-r border-white/10 sticky left-[230px] sm:left-[310px] z-20 shadow-xl">
+                                                <div className="p-4 sm:p-6 text-center bg-violet-500/[0.08] backdrop-blur-md h-full flex items-center justify-center border-r border-white/10 sticky left-[230px] sm:left-[310px] z-20 shadow-xl">
                                                     <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(139,92,246,0.3)]">
                                                         {getGrandTotal(p.id)}
                                                     </span>
@@ -207,7 +207,7 @@ export default function ViewBoardPage() {
                         </div>
 
                         {/* Desktop Table View */}
-                        <div className="hidden md:block bg-[#0a0a0a]/60 backdrop-blur-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
+                        <div className="hidden md:block bg-white/5 backdrop-blur-md rounded-[2.5rem] border border-white/10 overflow-hidden shadow-2xl">
                             <div className="overflow-x-auto">
                                 <table className="w-full border-collapse">
                                     <thead>
@@ -263,7 +263,7 @@ export default function ViewBoardPage() {
                                     </div>
                                     <div className="p-4 grid grid-cols-2 gap-3">
                                         {data.participants.map(p => (
-                                            <div key={p.id} className="bg-black/20 rounded-xl p-3 border border-white/5 text-center">
+                                            <div key={p.id} className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/5 text-center">
                                                 <div className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1 truncate">{p.name}</div>
                                                 <div className="text-2xl font-black text-white">{game.scores[p.id] || 0}</div>
                                             </div>
@@ -289,7 +289,7 @@ export default function ViewBoardPage() {
             </div>
 
             {/* Footer Attribution */}
-            <footer className="relative z-10 py-12 px-6 text-center border-t border-white/5 mt-12 bg-black">
+            <footer className="relative z-10 py-12 px-6 text-center border-t border-white/5 mt-12 bg-white/5 backdrop-blur-xl">
                 <p className="text-white/10 text-[10px] font-black uppercase tracking-[0.5em] hover:text-white/30 transition-colors cursor-default">
                     Powered by ScoreTag Live
                 </p>

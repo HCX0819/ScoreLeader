@@ -51,7 +51,8 @@ export default function Dashboard() {
       ],
       activities: [
         { id: crypto.randomUUID(), name: 'ROUND 1', subGames: [], directScores: {} }
-      ]
+      ],
+      backgroundColor: '#0f172a'
     };
 
     const { data, error } = await supabase

@@ -117,12 +117,8 @@ export default function ControllerPage() {
   };
 
   const updateBackgroundColor = async (color: string) => {
-    const { error } = await supabase
-      .from('scoreboards')
-      .update({ background_color: color })
-      .eq('id', boardId);
-
-    if (error) console.error("Color update failed:", error.message);
+    const newData = { ...data, backgroundColor: color };
+    await updateBoardData(newData);
   };
 
   const copyLink = () => {
@@ -255,15 +251,15 @@ export default function ControllerPage() {
 
   return (
     <div
-      className="h-screen text-white font-sans selection:bg-violet-500/30 overflow-hidden flex flex-col transition-colors duration-700"
-      style={{ backgroundColor: board.background_color || '#050505' }}
+      className="h-screen text-white font-sans selection:bg-violet-500/30 overflow-hidden flex flex-col transition-colors duration-200"
+      style={{ backgroundColor: data.backgroundColor || '#0f172a' }}
     >
 
       {/* Background Glow */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(120,40,200,0.1),_transparent_50%)] pointer-events-none" />
 
       {/* Header - Adaptive Height */}
-      <header className="flex-none px-3 sm:px-6 py-2 sm:py-4 flex flex-col sm:flex-row items-center justify-between border-b border-white/5 bg-[#0a0a0a]/90 backdrop-blur-xl z-40 relative gap-3 sm:gap-0">
+      <header className="flex-none px-3 sm:px-6 py-2 sm:py-4 flex flex-col sm:flex-row items-center justify-between border-b border-white/5 bg-white/5 backdrop-blur-xl z-40 relative gap-3 sm:gap-0">
         <div className="flex items-center justify-between w-full sm:w-auto gap-4">
           <div className="flex items-center gap-3">
             <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white">
@@ -280,7 +276,7 @@ export default function ControllerPage() {
                 ) : (
                   <ImageIcon className="text-white/20 group-hover:text-violet-400 transition-colors" size={18} />
                 )}
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Upload className="text-white" size={14} />
                 </div>
                 <input
@@ -346,75 +342,92 @@ export default function ControllerPage() {
             </button>
           </Link>
         </div>
-      </header>
+      </header >
 
       {/* Settings Modal */}
-      {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0a0a0a] rounded-2xl shadow-2xl p-6 w-full max-w-md border border-white/10">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-white flex items-center gap-2">
-                <Share2 size={24} className="text-violet-500" />
-                Share Board
-              </h3>
-              <button onClick={() => setShowSettings(false)} className="text-white/40 hover:text-white transition-colors">
-                <Plus className="rotate-45" size={28} />
-              </button>
-            </div>
-
-            <div className="space-y-8">
-              {/* Link Section */}
-              <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-3">
-                  Board Link
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    readOnly
-                    value={typeof window !== 'undefined' ? window.location.href : ''}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-violet-500/50 transition-colors select-all font-mono"
-                  />
-                  <button
-                    onClick={copyLink}
-                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent
-                                ${copied ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/10 text-white hover:bg-white/20 border-white/5"}`}
-                  >
-                    {copied ? <Check size={18} /> : <Copy size={18} />}
-                  </button>
-                </div>
+      {
+        showSettings && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/5 backdrop-blur-md p-4 animate-in fade-in duration-200">
+            <div className="bg-white/10 backdrop-blur-2xl rounded-2xl shadow-2xl p-6 w-full max-w-md border border-white/10">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-black text-white flex items-center gap-2">
+                  <Share2 size={24} className="text-violet-500" />
+                  Share Board
+                </h3>
+                <button onClick={() => setShowSettings(false)} className="text-white/40 hover:text-white transition-colors">
+                  <Plus className="rotate-45" size={28} />
+                </button>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-3">
-                  Background Color
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {['#050505', '#0f172a', '#1a1a1a', '#2d3436', '#0984e3', '#6c5ce7', '#d63031', '#00b894'].map(color => (
-                    <button
-                      key={color}
-                      onClick={() => updateBackgroundColor(color)}
-                      className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${board.background_color === color ? 'border-violet-500 scale-110 shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'border-white/10'}`}
-                      style={{ backgroundColor: color }}
+              <div className="space-y-8">
+                {/* Link Section */}
+                <div>
+                  <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-3">
+                    Board Link
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={typeof window !== 'undefined' ? window.location.href : ''}
+                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-violet-500/50 transition-colors select-all font-mono"
                     />
-                  ))}
-                  <input
-                    type="color"
-                    className="w-8 h-8 rounded-full bg-transparent border-none cursor-pointer"
-                    onChange={(e) => updateBackgroundColor(e.target.value)}
-                  />
+                    <button
+                      onClick={copyLink}
+                      className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent
+                                ${copied ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/10 text-white hover:bg-white/20 border-white/5"}`}
+                    >
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-3">
+                    Background Color
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Popular Deep Palette */}
+                    {[
+                      '#0f172a', // Slate Navy (Very Popular)
+                      '#0a0a0a', // Deep Black 
+                      '#1e1b4b', // Indigo Night
+                      '#1e293b', // Cool Slate
+                      '#064e3b', // Deep Emerald
+                      '#450a0a', // Rich Maroon
+                      '#164e63', // Deep Cyan
+                      '#312e81', // Royal Blue
+                    ].map(color => (
+                      <button
+                        key={color}
+                        onClick={() => updateBackgroundColor(color)}
+                        className={`w-10 h-10 rounded-xl border-2 transition-all hover:scale-105 active:scale-95 ${data.backgroundColor === color ? 'border-white ring-2 ring-white/20' : 'border-white/5'}`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                    <div className="relative group">
+                      <input
+                        type="color"
+                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 cursor-pointer overflow-hidden opacity-0 absolute inset-0 z-10"
+                        onChange={(e) => updateBackgroundColor(e.target.value)}
+                      />
+                      <div className="w-10 h-10 rounded-xl border border-white/20 flex items-center justify-center bg-gradient-to-br from-white/10 to-transparent group-hover:bg-white/20 transition-colors">
+                        <Plus size={18} className="text-white/40" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Main Content Area - Flex Grow to Fill Screen */}
       <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-12 scroll-smooth">
 
         {/* Mobile Quick Jump / Navigation Bar */}
         {data.activities.length > 1 && (
-          <div className="md:hidden sticky top-0 z-30 flex items-center gap-2 overflow-x-auto no-scrollbar py-3 px-4 bg-inherit/90 backdrop-blur-md border-b border-white/5">
+          <div className="md:hidden sticky top-0 z-30 flex items-center gap-2 overflow-x-auto no-scrollbar py-3 px-4 bg-black/60 backdrop-blur-md border-b border-white/5">
             <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] whitespace-nowrap mr-2">Jump To:</span>
             {data.activities.map((act) => (
               <a
@@ -439,16 +452,16 @@ export default function ControllerPage() {
             <div className="bg-white/5 backdrop-blur-md rounded-xl sm:rounded-2xl border border-white/10 shadow-2xl overflow-x-auto relative no-scrollbar">
               <div className="min-w-max">
                 {/* Header */}
-                <div className="grid border-b border-white/5 bg-[#0a0a0a]/95 sticky top-0 z-30"
+                <div className="grid border-b border-white/5 bg-black/40 backdrop-blur-xl sticky top-0 z-30"
                   style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px) 70px` }}>
 
                   {/* Sticky Team Header */}
-                  <div className="p-4 sm:p-5 font-bold text-white/40 text-[10px] sm:text-xs uppercase tracking-widest sticky left-0 bg-[#0a0a0a] z-40 border-r border-white/10">
+                  <div className="p-4 sm:p-5 font-bold text-white/40 text-[10px] sm:text-xs uppercase tracking-widest sticky left-0 bg-white/5 backdrop-blur-md z-40 border-r border-white/10">
                     Teams
                   </div>
 
                   {/* Sticky Total Header */}
-                  <div className="p-4 sm:p-5 font-black text-violet-400 text-[10px] sm:text-xs uppercase tracking-widest text-center border-l border-white/5 bg-violet-500/10 sticky left-[160px] sm:left-[240px] z-40 border-r border-white/10">
+                  <div className="p-4 sm:p-5 font-black text-violet-400 text-[10px] sm:text-xs uppercase tracking-widest text-center border-l border-white/5 bg-violet-500/10 backdrop-blur-md sticky left-[160px] sm:left-[240px] z-40 border-r border-white/10">
                     Total
                   </div>
 
@@ -472,7 +485,7 @@ export default function ControllerPage() {
                       </button>
                     </div>
                   ))}
-                  <div className="p-2 flex items-center justify-center border-l border-white/5 bg-[#0a0a0a]">
+                  <div className="p-2 flex items-center justify-center border-l border-white/5 bg-white/5 backdrop-blur-md">
                     <button onClick={addActivity} className="p-2 hover:bg-white/10 text-violet-400 rounded-lg transition-colors" title="Add Activity">
                       <Plus size={16} />
                     </button>
@@ -485,8 +498,8 @@ export default function ControllerPage() {
                     style={{ gridTemplateColumns: `minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px) 70px` }}>
 
                     {/* Sticky Team Name */}
-                    <div className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 sticky left-0 bg-[#050505] z-30 border-r border-white/10 shadow-lg">
-                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-[10px] font-black text-white/40 shrink-0">{p.name.charAt(0)}</div>
+                    <div className="p-3 sm:p-5 flex items-center gap-3 sm:gap-4 sticky left-0 bg-white/10 backdrop-blur-xl z-30 border-r border-white/10 shadow-lg">
+                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[10px] font-black text-white/40 shrink-0">{p.name.charAt(0)}</div>
                       {editingId === p.id ? (
                         <input autoFocus className="flex-1 bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-xs sm:text-sm font-bold text-white outline-none"
                           defaultValue={p.name} onBlur={(e) => updateName('participant', p.id, e.target.value)}
@@ -497,7 +510,7 @@ export default function ControllerPage() {
                     </div>
 
                     {/* Sticky Total Value */}
-                    <div className="p-3 sm:p-5 flex items-center justify-center bg-violet-500/5 sticky left-[160px] sm:left-[240px] z-30 border-r border-white/10 shadow-lg">
+                    <div className="p-3 sm:p-5 flex items-center justify-center bg-violet-500/5 backdrop-blur-md sticky left-[160px] sm:left-[240px] z-30 border-r border-white/10 shadow-lg">
                       <span className="text-xl sm:text-2xl font-black text-white">{getGrandTotal(p.id)}</span>
                     </div>
 
@@ -506,7 +519,7 @@ export default function ControllerPage() {
                         {act.subGames.length > 0 ? (
                           <span className="text-base sm:text-lg font-bold text-violet-400/50">{getActivityTotal(act.id, p.id)}</span>
                         ) : (
-                          <div className="flex items-center gap-1 sm:gap-2 bg-black/20 rounded-lg p-1 border border-white/5">
+                          <div className="flex items-center gap-1 sm:gap-2 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/5">
                             <button onClick={() => updateActivityScore(act.id, p.id, -1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
                             {editingId === `score-${p.id}-${act.id}` ? (
                               <input type="number" autoFocus className="w-10 sm:w-12 bg-white/10 text-center font-bold text-white outline-none rounded text-sm"
@@ -521,7 +534,7 @@ export default function ControllerPage() {
                         )}
                       </div>
                     ))}
-                    <div className="p-2 flex items-center justify-center border-l border-white/5 bg-[#050505]">
+                    <div className="p-2 flex items-center justify-center border-l border-white/5 bg-white/5">
                       <button onClick={() => deleteItem('participant', p.id)} className="p-2 text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 size={16} />
                       </button>
@@ -568,7 +581,7 @@ export default function ControllerPage() {
               {act.subGames.length > 0 ? (
                 <>
                   {/* Desktop View: Table */}
-                  <div className="hidden md:block bg-[#0a0a0a] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                  <div className="hidden md:block bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full border-collapse">
                         <thead>

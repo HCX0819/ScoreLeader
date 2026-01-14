@@ -25,6 +25,7 @@ export interface ScoreboardData {
     participants: Participant[];
     activities: Activity[];
     logo?: string;
+    backgroundColor?: string;
 }
 
 export interface Scoreboard {
@@ -58,7 +59,8 @@ export function useScoreboard(id: string | undefined | string[]) {
                 const safeData: ScoreboardData = {
                     participants: Array.isArray(rawData.participants) ? rawData.participants : [],
                     activities: Array.isArray(rawData.activities) ? rawData.activities : [],
-                    logo: rawData.logo
+                    logo: rawData.logo,
+                    backgroundColor: rawData.backgroundColor || data.background_color
                 };
 
                 // MIGRATION: If we have old 'columns', convert them to activities
@@ -119,7 +121,8 @@ export function useScoreboard(id: string | undefined | string[]) {
                             const safeData: ScoreboardData = {
                                 participants: Array.isArray(rawData.participants) ? rawData.participants : [],
                                 activities: Array.isArray(rawData.activities) ? rawData.activities : [],
-                                logo: rawData.logo
+                                logo: rawData.logo,
+                                backgroundColor: rawData.backgroundColor || newData.background_color
                             };
                             return { ...newData, data: safeData } as Scoreboard;
                         } else {
