@@ -26,7 +26,8 @@ export default function ControllerPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [newPin, setNewPin] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedStaff, setCopiedStaff] = useState(false);
+  const [copiedPublic, setCopiedPublic] = useState(false);
   const [newIncrement, setNewIncrement] = useState("");
 
   // Authentication Check
@@ -123,10 +124,17 @@ export default function ControllerPage() {
     await updateBoardData(newData);
   };
 
-  const copyLink = () => {
+  const copyStaffLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedStaff(true);
+    setTimeout(() => setCopiedStaff(false), 2000);
+  };
+
+  const copyPublicLink = () => {
+    const url = `${window.location.origin}/view/${boardId}`;
+    navigator.clipboard.writeText(url);
+    setCopiedPublic(true);
+    setTimeout(() => setCopiedPublic(false), 2000);
   };
 
   // --- Increment Buttons Helpers ---
@@ -292,87 +300,74 @@ export default function ControllerPage() {
       {/* Background Glow */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(120,40,200,0.1),_transparent_50%)] pointer-events-none" />
 
-      {/* Header - Adaptive Height */}
-      <header className="flex-none px-3 sm:px-6 py-2 sm:py-4 flex flex-col sm:flex-row items-center justify-between border-b border-white/5 bg-white/5 backdrop-blur-xl z-40 relative gap-3 sm:gap-0">
-        <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-white/50 hover:text-white">
-              <ChevronLeft size={20} />
-            </Link>
-            <div className="flex items-center gap-3">
-              {/* Logo Upload - Slightly smaller on mobile */}
-              <div
-                className="relative w-10 h-10 sm:w-12 sm:h-12 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer group border border-white/10 hover:border-violet-500/50 transition-colors shadow-inner"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {data.logo ? (
-                  <img src={data.logo} alt="Logo" className="w-full h-full object-contain" />
-                ) : (
-                  <ImageIcon className="text-white/20 group-hover:text-violet-400 transition-colors" size={18} />
-                )}
-                <div className="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Upload className="text-white" size={14} />
-                </div>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleLogoUpload}
-                />
-              </div>
-
-              {/* Title Editing */}
-              <div className="max-w-[150px] sm:max-w-xs">
-                {editingTitle ? (
-                  <input
-                    autoFocus
-                    className="font-black text-lg sm:text-2xl tracking-tight text-white outline-none border-b-2 border-violet-500 bg-transparent w-full"
-                    defaultValue={board.title}
-                    onBlur={(e) => updateTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                  />
-                ) : (
-                  <div className="group flex items-center gap-2 cursor-pointer" onClick={() => setEditingTitle(true)}>
-                    <h1 className="font-black text-lg sm:text-2xl tracking-tight text-white hover:text-violet-200 transition-colors truncate">{board.title}</h1>
-                    <Edit3 size={14} className="text-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {board.pin && <Lock size={14} className="text-violet-400 shrink-0" />}
-                  </div>
-                )}
-                <p className="text-[10px] text-white/30 font-mono tracking-widest uppercase">ID: {boardId.slice(0, 6)}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Mobile Edit Indicator */}
-          <div className="flex md:hidden items-center gap-2 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-violet-500"></span>
+      {/* Header - Navigation & Control */}
+      <header className="sticky top-0 z-40 bg-black/60 backdrop-blur-md border-b border-white/5 py-4 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-violet-500/10 border border-violet-500/20 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+            <span className="text-[10px] font-black text-violet-400 uppercase tracking-widest">
+              Editor Mode
             </span>
-            <span className="text-[8px] font-black uppercase tracking-widest text-violet-300">Editor</span>
+          </div>
+          <div className="hidden sm:block h-4 w-[1px] bg-white/10 mx-1" />
+          <div className="flex items-center gap-3">
+            {/* Logo Upload - Slightly smaller on mobile */}
+            <div
+              className="relative w-10 h-10 sm:w-12 sm:h-12 bg-white/5 rounded-xl flex items-center justify-center overflow-hidden cursor-pointer group border border-white/10 hover:border-violet-500/50 transition-colors shadow-inner"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {data.logo ? (
+                <img src={data.logo} alt="Logo" className="w-full h-full object-contain" />
+              ) : (
+                <ImageIcon className="text-white/20 group-hover:text-violet-400 transition-colors" size={18} />
+              )}
+              <div className="absolute inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Upload className="text-white" size={14} />
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleLogoUpload}
+              />
+            </div>
+
+            {/* Title Editing */}
+            <div className="max-w-[150px] sm:max-w-xs">
+              {editingTitle ? (
+                <input
+                  autoFocus
+                  className="font-black text-lg sm:text-2xl tracking-tight text-white outline-none border-b-2 border-violet-500 bg-transparent w-full"
+                  defaultValue={board.title}
+                  onBlur={(e) => updateTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                />
+              ) : (
+                <h1
+                  onClick={() => setEditingTitle(true)}
+                  className="font-black text-lg sm:text-2xl tracking-tight text-white/90 truncate cursor-pointer hover:text-white transition-colors"
+                >
+                  {board.title || "Untitled Scoreboard"}
+                </h1>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto sm:overflow-visible no-scrollbar pb-1 sm:pb-0">
-          <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-4 py-2 backdrop-blur-md">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.8)]"></span>
-            </span>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-300/80">Authorized Editor</span>
-          </div>
+
 
           <button
             onClick={() => setShowSettings(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full text-xs sm:text-sm font-bold border border-white/5 transition-all whitespace-nowrap"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full text-xs sm:text-sm font-bold border border-white/5 transition-all whitespace-nowrap"
           >
-            <Share2 size={16} /> <span className="sm:inline">Settings</span>
+            <Settings size={16} /> <span className="sm:inline">Share & Settings</span>
           </button>
           <Link href={`/view/${boardId}`} target="_blank" className="flex-1 sm:flex-none">
-            <button className="w-full flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all whitespace-nowrap">
-              <ExternalLink size={16} className="sm:hidden" />
-              <span>View Page</span>
+            <button className="w-full flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all whitespace-nowrap">
+              <ExternalLink size={16} />
+              <span>Live View</span>
             </button>
           </Link>
         </div>
@@ -394,24 +389,46 @@ export default function ControllerPage() {
               </div>
 
               <div className="space-y-8">
-                {/* Link Section */}
-                <div>
-                  <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-3">
-                    Board Link
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      readOnly
-                      value={typeof window !== 'undefined' ? window.location.href : ''}
-                      className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-violet-500/50 transition-colors select-all font-mono"
-                    />
-                    <button
-                      onClick={copyLink}
-                      className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent
-                                ${copied ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/10 text-white hover:bg-white/20 border-white/5"}`}
-                    >
-                      {copied ? <Check size={18} /> : <Copy size={18} />}
-                    </button>
+                {/* Links Section */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-2">
+                      Live View Link (For Audience)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        readOnly
+                        value={typeof window !== 'undefined' ? `${window.location.origin}/view/${boardId}` : ''}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-violet-400 outline-none focus:border-violet-500/50 transition-colors select-all font-mono"
+                      />
+                      <button
+                        onClick={copyPublicLink}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent
+                                  ${copiedPublic ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/10 text-white hover:bg-white/20 border-white/5"}`}
+                      >
+                        {copiedPublic ? <Check size={18} /> : <Copy size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-2">
+                      Controller Link (For Staff Only)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        readOnly
+                        value={typeof window !== 'undefined' ? window.location.href : ''}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-violet-500/50 transition-colors select-all font-mono italic"
+                      />
+                      <button
+                        onClick={copyStaffLink}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border border-transparent
+                                  ${copiedStaff ? "bg-green-500/20 text-green-400 border-green-500/30" : "bg-white/10 text-white hover:bg-white/20 border-white/5"}`}
+                      >
+                        {copiedStaff ? <Check size={18} /> : <Copy size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

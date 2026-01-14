@@ -67,12 +67,14 @@ export default function ViewBoardPage() {
                         <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tighter text-white mb-2 sm:mb-3 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">
                             {board.title}
                         </h1>
-                        <div className="flex items-center justify-center md:justify-start gap-3 text-violet-400 font-black text-[10px] sm:text-xs tracking-[0.3em] uppercase">
-                            <span className="relative flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.8)]"></span>
+                        <div className="flex items-center justify-center md:justify-start gap-3 font-black text-[10px] sm:text-xs tracking-[0.3em] uppercase">
+                            <span className="flex items-center gap-2 px-2 py-1 bg-violet-500/20 border border-violet-500/30 rounded-md text-violet-300">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.8)]"></span>
+                                </span>
+                                LIVE VIEW ● VIEW ONLY
                             </span>
-                            Live Leaderboard
                         </div>
                     </div>
                 </div>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Plus, Layout, MoreHorizontal, Loader2, Edit2, Image as ImageIcon, X, Trash2 } from 'lucide-react';
+import { Plus, Layout, MoreHorizontal, Loader2, Edit2, Image as ImageIcon, X, Trash2, ExternalLink } from 'lucide-react';
 import { compressImage } from "@/lib/image-compression";
 
 interface BoardSummary {
@@ -258,6 +258,17 @@ export default function Dashboard() {
                         >
                           <Edit2 size={14} />
                           Edit Board Info
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`/view/${board.id}`, '_blank');
+                            setMenuOpenId(null);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-colors flex items-center gap-2"
+                        >
+                          <ExternalLink size={14} />
+                          Open Live View
                         </button>
                         <div className="h-[1px] bg-white/5 mx-2" />
                         <button

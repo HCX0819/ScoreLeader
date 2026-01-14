@@ -47,13 +47,13 @@
 
 ## Pending ⏳
 
-- [ ] **1. UI & Wording Clarity**
-    - [ ] Rename "Share" and "View Board" buttons for better clarity.
-    - [ ] Add visual indicators for "Edit Mode" vs "View-only Mode".
+- [x] **1. UI & Wording Clarity**
+    - [x] Rename "Share" and "View Board" buttons for better clarity.
+    - [x] Add visual indicators for "Edit Mode" vs "View-only Mode".
 
-- [ ] **2. Sharing & Access Control**
-    - [ ] Enable sharing for view-only mode.
-    - [ ] Distinguish between Staff (edit) and Participants (view).
+- [x] **2. Sharing & Access Control**
+    - [x] Enable sharing for view-only mode.
+    - [x] Distinguish between Staff (edit) and Participants (view).
 
 ---
 
