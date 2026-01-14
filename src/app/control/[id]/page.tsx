@@ -586,9 +586,9 @@ export default function ControllerPage() {
                       <table className="w-full border-collapse">
                         <thead>
                           <tr className="border-b border-white/5 bg-white/[0.02]">
-                            <th className="p-6 text-left text-xs font-black text-white/30 uppercase tracking-[0.2em] w-64">Sub-Game</th>
+                            <th className="p-6 text-left text-xs font-black text-white/30 uppercase tracking-[0.2em] w-64 border-r border-white/10">Sub-Game</th>
                             {data.participants.map(p => (
-                              <th key={p.id} className="p-6 text-center text-xs font-black text-white/30 uppercase tracking-[0.2em]">{p.name}</th>
+                              <th key={p.id} className="p-6 text-center text-xs font-black text-white/30 uppercase tracking-[0.2em] border-r border-white/10">{p.name}</th>
                             ))}
                             <th className="w-20"></th>
                           </tr>
@@ -596,7 +596,7 @@ export default function ControllerPage() {
                         <tbody>
                           {act.subGames.map((game) => (
                             <tr key={game.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
-                              <td className="p-6">
+                              <td className="p-6 border-r border-white/10">
                                 {editingId === game.id ? (
                                   <input autoFocus className="bg-white/5 border border-violet-500 rounded px-3 py-1.5 text-sm font-bold text-white outline-none w-full"
                                     defaultValue={game.name} onBlur={(e) => updateName('subgame', game.id, e.target.value, act.id)}
@@ -606,7 +606,7 @@ export default function ControllerPage() {
                                 )}
                               </td>
                               {data.participants.map(p => (
-                                <td key={p.id} className="p-6">
+                                <td key={p.id} className="p-6 border-r border-white/10">
                                   <div className="flex flex-col items-center gap-2">
                                     <div className="flex items-center justify-between w-32 bg-white/5 rounded-xl p-1.5 border border-white/10">
                                       <button onClick={() => updateSubGameScore(act.id, game.id, p.id, -1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">-</button>
