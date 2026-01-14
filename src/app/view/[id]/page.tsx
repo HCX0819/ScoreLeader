@@ -151,7 +151,7 @@ export default function ViewBoardPage() {
                                                 style={{ gridTemplateColumns: `70px minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px)` }}
                                             >
                                                 {/* Rank */}
-                                                <div className="p-4 sm:p-6 text-center flex items-center justify-center sticky left-0 z-20 bg-white/10 backdrop-blur-md border-r border-white/10 shadow-xl">
+                                                <div className="p-4 sm:p-6 text-center flex items-center justify-center sticky left-0 z-20 border-r border-white/10">
                                                     <span className={`text-xl sm:text-3xl font-black font-mono tracking-tighter
                                                         ${index === 0 ? 'text-yellow-500' :
                                                             index === 1 ? 'text-slate-400' :
@@ -163,14 +163,14 @@ export default function ViewBoardPage() {
                                                 </div>
 
                                                 {/* Team Name */}
-                                                <div className="p-4 sm:p-6 sticky left-[70px] z-20 bg-white/10 backdrop-blur-md border-r border-white/10 shadow-xl">
+                                                <div className="p-4 sm:p-6 sticky left-[70px] z-20 border-r border-white/10">
                                                     <h3 className={`font-black text-sm sm:text-xl tracking-tight transition-colors truncate ${index === 0 ? 'text-yellow-100' : 'text-white/90'}`}>
                                                         {p.name}
                                                     </h3>
                                                 </div>
 
                                                 {/* Grand Total */}
-                                                <div className="p-4 sm:p-6 text-center bg-violet-500/[0.08] backdrop-blur-md h-full flex items-center justify-center border-r border-white/10 sticky left-[230px] sm:left-[310px] z-20 shadow-xl">
+                                                <div className="p-4 sm:p-6 text-center h-full flex items-center justify-center sticky left-[230px] sm:left-[310px] z-20 border-r border-white/10">
                                                     <span className="text-xl sm:text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(139,92,246,0.3)]">
                                                         {getGrandTotal(p.id)}
                                                     </span>
