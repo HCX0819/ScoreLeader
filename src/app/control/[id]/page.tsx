@@ -219,20 +219,21 @@ export default function ControllerPage() {
   };
 
   const updateName = async (type: 'participant' | 'activity' | 'subgame', id: string, newName: string, activityId?: string) => {
-    const newData = { ...data };
+    // Use deep copy to avoid mutating original state
+    const newData = JSON.parse(JSON.stringify(data));
     if (type === 'participant') {
-      const p = newData.participants.find(x => x.id === id);
+      const p = newData.participants.find((x: { id: string }) => x.id === id);
       if (p) p.name = newName;
     } else if (type === 'activity') {
-      const a = newData.activities.find(x => x.id === id);
+      const a = newData.activities.find((x: { id: string }) => x.id === id);
       if (a) a.name = newName;
     } else if (type === 'subgame' && activityId) {
-      const a = newData.activities.find(x => x.id === activityId);
-      const g = a?.subGames.find(x => x.id === id);
+      const a = newData.activities.find((x: { id: string }) => x.id === activityId);
+      const g = a?.subGames.find((x: { id: string }) => x.id === id);
       if (g) g.name = newName;
     }
-    await updateBoardData(newData);
     setEditingId(null);
+    await updateBoardData(newData);
   };
 
   const deleteItem = async (type: 'participant' | 'activity' | 'subgame', id: string, activityId?: string) => {
@@ -476,7 +477,7 @@ export default function ControllerPage() {
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         />
                       ) : (
-                        <div onClick={() => act.subGames.length === 0 && setEditingId(act.id)} className="text-center cursor-pointer hover:bg-white/5 rounded py-1 px-2 w-full truncate">
+                        <div onClick={() => setEditingId(act.id)} className="text-center cursor-pointer hover:bg-white/5 rounded py-1 px-2 w-full truncate">
                           <span className="text-[10px] sm:text-xs font-bold text-white/60 uppercase tracking-wider block">{act.name}</span>
                         </div>
                       )}
