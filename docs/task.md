@@ -42,6 +42,7 @@
     - [x] Quick action buttons (Configurable).
     - [x] Implement configurable score denomination (custom increment/decrement values).
     - [x] Restore default increments ([5, 7, 10]).
+    - [x] Add custom increment buttons to Summary Table for direct score editing.
 
 ---
 

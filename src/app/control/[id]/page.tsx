@@ -635,22 +635,35 @@ export default function ControllerPage() {
                     </div>
 
                     {data.activities.map(act => (
-                      <div key={act.id} className="p-2 sm:p-3 border-l border-white/5 flex items-center justify-center">
+                      <div key={act.id} className="p-2 sm:p-3 border-l border-white/5 flex flex-col items-center justify-center gap-2">
                         {act.subGames.length > 0 ? (
                           <span className="text-base sm:text-lg font-bold text-violet-400/50">{getActivityTotal(act.id, p.id)}</span>
                         ) : (
-                          <div className="flex items-center gap-1 sm:gap-2 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/5">
-                            <button onClick={() => updateActivityScore(act.id, p.id, -(getIncrementButtons().find(v => v > 0) || 1))} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
-                            {editingId === `score-${p.id}-${act.id}` ? (
-                              <input type="number" autoFocus className="w-10 sm:w-12 bg-white/10 text-center font-bold text-white outline-none rounded text-sm"
-                                defaultValue={act.directScores[p.id] || 0}
-                                onBlur={(e) => setActivityScore(act.id, p.id, e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
-                            ) : (
-                              <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-10 sm:w-12 text-center font-black text-white cursor-text text-sm">{act.directScores[p.id] || 0}</span>
-                            )}
-                            <button onClick={() => updateActivityScore(act.id, p.id, getIncrementButtons().find(v => v > 0) || 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
-                          </div>
+                          <>
+                            <div className="flex items-center gap-1 sm:gap-2 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/5">
+                              <button onClick={() => updateActivityScore(act.id, p.id, -(getIncrementButtons().find(v => v > 0) || 1))} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
+                              {editingId === `score-${p.id}-${act.id}` ? (
+                                <input type="number" autoFocus className="w-10 sm:w-12 bg-white/10 text-center font-bold text-white outline-none rounded text-sm"
+                                  defaultValue={act.directScores[p.id] || 0}
+                                  onBlur={(e) => setActivityScore(act.id, p.id, e.target.value)}
+                                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+                              ) : (
+                                <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-10 sm:w-12 text-center font-black text-white cursor-text text-sm">{act.directScores[p.id] || 0}</span>
+                              )}
+                              <button onClick={() => updateActivityScore(act.id, p.id, getIncrementButtons().find(v => v > 0) || 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
+                            </div>
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {getIncrementButtons().map((val) => (
+                                <button
+                                  key={val}
+                                  onClick={() => updateActivityScore(act.id, p.id, val)}
+                                  className={`px-2 py-1 text-[10px] rounded font-black transition-colors ${val < 0 ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400' : 'bg-violet-500/10 hover:bg-violet-500/20 text-violet-400'}`}
+                                >
+                                  {val > 0 ? `+${val}` : val}
+                                </button>
+                              ))}
+                            </div>
+                          </>
                         )}
                       </div>
                     ))}
