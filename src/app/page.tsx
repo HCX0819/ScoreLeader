@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Plus, Layout, MoreHorizontal, Loader2 } from 'lucide-react';
+import { Plus, Layout, MoreHorizontal, Loader2, Edit2, Image as ImageIcon, X, Trash2 } from 'lucide-react';
+import { compressImage } from "@/lib/image-compression";
 
 interface BoardSummary {
   id: string;
@@ -17,6 +18,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+
+  // Edit Modal State
+  const [editingBoard, setEditingBoard] = useState<BoardSummary | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editLogo, setEditLogo] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -83,6 +91,57 @@ export default function Dashboard() {
     } else {
       setBoards(boards.filter(b => b.id !== id));
       setMenuOpenId(null);
+    }
+  };
+
+  const handleUpdateBoard = async () => {
+    if (!editingBoard) return;
+    setIsUpdating(true);
+
+    try {
+      // Fetch current data to preserve other fields
+      const { data: currentBoard } = await supabase
+        .from('scoreboards')
+        .select('data')
+        .eq('id', editingBoard.id)
+        .single();
+
+      const updatedData = {
+        ...(currentBoard?.data || {}),
+        logo: editLogo
+      };
+
+      const { error } = await supabase
+        .from('scoreboards')
+        .update({
+          title: editTitle,
+          data: updatedData
+        })
+        .eq('id', editingBoard.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setBoards(boards.map(b => b.id === editingBoard.id ? { ...b, title: editTitle, data: updatedData } : b));
+      setEditingBoard(null);
+    } catch (error) {
+      console.error("Error updating board:", error);
+      alert("Failed to update board info");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const base64 = await compressImage(file);
+      setEditLogo(base64);
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to process image");
     }
   };
 
@@ -187,9 +246,24 @@ export default function Dashboard() {
                     {menuOpenId === board.id && (
                       <div className="absolute right-0 top-full mt-2 w-48 bg-[#0a0a0a] rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] border border-white/10 z-20 py-1 overflow-hidden backdrop-blur-xl">
                         <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingBoard(board);
+                            setEditTitle(board.title || "");
+                            setEditLogo(board.data?.logo || "");
+                            setMenuOpenId(null);
+                          }}
+                          className="w-full text-left px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-colors flex items-center gap-2"
+                        >
+                          <Edit2 size={14} />
+                          Edit Board Info
+                        </button>
+                        <div className="h-[1px] bg-white/5 mx-2" />
+                        <button
                           onClick={(e) => deleteBoard(board.id, e)}
                           className="w-full text-left px-4 py-3 text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors flex items-center gap-2"
                         >
+                          <Trash2 size={14} />
                           Delete Board
                         </button>
                       </div>
@@ -231,6 +305,86 @@ export default function Dashboard() {
         )}
 
       </main>
+      {/* Edit Board Modal */}
+      {editingBoard && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setEditingBoard(null)} />
+
+          <div className="relative w-full max-w-md bg-[#0a0a0a] border border-white/10 rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-black text-white italic">Edit Board Info</h2>
+              <button
+                onClick={() => setEditingBoard(null)}
+                className="p-2 hover:bg-white/5 rounded-full text-white/40 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Title Input */}
+              <div>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Board Title</label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Enter board title..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/10 focus:outline-none focus:border-violet-500/50 transition-colors"
+                />
+              </div>
+
+              {/* Logo Upload */}
+              <div>
+                <label className="block text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mb-2">Board Logo</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                    {editLogo ? (
+                      <img src={editLogo} alt="Preview" className="w-full h-full object-contain" />
+                    ) : (
+                      <ImageIcon className="text-white/10" size={32} />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <label className="block">
+                      <span className="sr-only">Choose logo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="block w-full text-sm text-white/40
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-full file:border-0
+                          file:text-xs file:font-bold
+                          file:bg-violet-600 file:text-white
+                          hover:file:bg-violet-700
+                          cursor-pointer"
+                      />
+                    </label>
+                    <button
+                      onClick={() => setEditLogo("")}
+                      className="text-[10px] font-bold text-red-400/50 hover:text-red-400 transition-colors uppercase tracking-widest"
+                    >
+                      Remove Logo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  onClick={handleUpdateBoard}
+                  disabled={isUpdating}
+                  className="w-full py-4 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-2xl font-black text-white italic tracking-wider shadow-[0_10px_30px_rgba(139,92,246,0.3)] transition-all flex items-center justify-center gap-2"
+                >
+                  {isUpdating ? <Loader2 className="animate-spin" size={20} /> : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
