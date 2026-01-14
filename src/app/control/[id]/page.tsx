@@ -641,7 +641,7 @@ export default function ControllerPage() {
                         ) : (
                           <>
                             <div className="flex items-center gap-1 sm:gap-2 bg-white/5 backdrop-blur-sm rounded-lg p-1 border border-white/5">
-                              <button onClick={() => updateActivityScore(act.id, p.id, -(getIncrementButtons().find(v => v > 0) || 1))} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
+                              <button onClick={() => updateActivityScore(act.id, p.id, -1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">-</button>
                               {editingId === `score-${p.id}-${act.id}` ? (
                                 <input type="number" autoFocus className="w-10 sm:w-12 bg-white/10 text-center font-bold text-white outline-none rounded text-sm"
                                   defaultValue={act.directScores[p.id] || 0}
@@ -650,7 +650,7 @@ export default function ControllerPage() {
                               ) : (
                                 <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-10 sm:w-12 text-center font-black text-white cursor-text text-sm">{act.directScores[p.id] || 0}</span>
                               )}
-                              <button onClick={() => updateActivityScore(act.id, p.id, getIncrementButtons().find(v => v > 0) || 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
+                              <button onClick={() => updateActivityScore(act.id, p.id, 1)} className="w-7 h-7 sm:w-8 sm:h-8 hover:bg-white/10 rounded-md text-white/30 text-[10px] flex items-center justify-center font-black">+</button>
                             </div>
                             <div className="flex flex-wrap gap-1 justify-center">
                               {getIncrementButtons().map((val) => (
