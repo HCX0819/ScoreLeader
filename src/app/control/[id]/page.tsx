@@ -480,7 +480,7 @@ export default function ControllerPage() {
                           <span className="text-[10px] sm:text-xs font-bold text-white/60 uppercase tracking-wider block">{act.name}</span>
                         </div>
                       )}
-                      <button onClick={() => deleteItem('activity', act.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 text-white/20 hover:text-red-400 transition-colors">
+                      <button onClick={() => deleteItem('activity', act.id)} className="absolute top-1 right-1 p-1 text-white/20 hover:text-red-400 transition-colors">
                         <Trash2 size={10} />
                       </button>
                     </div>
