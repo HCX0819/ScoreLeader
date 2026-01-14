@@ -629,6 +629,19 @@ export default function ControllerPage() {
                             </tr>
                           ))}
                         </tbody>
+                        <tfoot>
+                          <tr className="bg-violet-500/10 border-t border-violet-500/20">
+                            <td className="p-6 border-r border-white/10">
+                              <span className="font-black text-violet-400 uppercase tracking-widest text-xs">Round Total</span>
+                            </td>
+                            {data.participants.map(p => (
+                              <td key={p.id} className="p-6 text-center border-r border-white/10">
+                                <span className="text-2xl font-black text-violet-400">{getActivityTotal(act.id, p.id)}</span>
+                              </td>
+                            ))}
+                            <td></td>
+                          </tr>
+                        </tfoot>
                       </table>
                     </div>
                   </div>
