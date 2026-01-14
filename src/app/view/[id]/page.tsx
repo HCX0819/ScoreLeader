@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useScoreboard, Participant } from "@/hooks/useScoreboard";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import { Trophy, Activity, Loader2, Share2, Copy, Check } from 'lucide-react';
+import { Trophy, Activity, Loader2, Share2, Copy, Check, Eye, EyeOff } from 'lucide-react';
 
 export default function ViewBoardPage() {
     const params = useParams();
@@ -12,6 +12,7 @@ export default function ViewBoardPage() {
     const boardId = Array.isArray(rawId) ? rawId[0] : rawId;
     const board = useScoreboard(boardId);
     const [copied, setCopied] = useState(false);
+    const [showDetails, setShowDetails] = useState(false);
 
     const copyLink = () => {
         if (typeof window !== 'undefined') {
@@ -107,6 +108,16 @@ export default function ViewBoardPage() {
                     </div>
 
                     <button
+                        onClick={() => setShowDetails(!showDetails)}
+                        className="group relative flex items-center gap-2 px-5 py-3 rounded-2xl border bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10 hover:border-white/20 hover:scale-105 active:scale-95 shadow-xl transition-all duration-300"
+                    >
+                        {showDetails ? <EyeOff size={18} /> : <Eye size={18} />}
+                        <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">
+                            {showDetails ? 'Hide Details' : 'Show Details'}
+                        </span>
+                    </button>
+
+                    <button
                         onClick={copyLink}
                         className={`group relative flex items-center gap-2 px-5 py-3 rounded-2xl border transition-all duration-300
                             ${copied ? 'bg-green-500/20 border-green-500/50 text-green-400'
@@ -124,7 +135,7 @@ export default function ViewBoardPage() {
             </header>
 
             {/* Main Content Sections */}
-            <div className="relative z-10 max-w-7xl mx-auto p-4 sm:p-12 space-y-16 sm:space-y-24 scroll-smooth">
+            <div className="relative z-10 w-full mx-auto p-4 sm:p-12 space-y-16 sm:space-y-24 scroll-smooth">
 
                 {/* Mobile Quick Jump */}
                 {data.activities.length > 0 && (
@@ -132,7 +143,7 @@ export default function ViewBoardPage() {
                         <div className="flex items-center gap-2 px-4 italic">
                             <span className="text-[8px] font-black text-white/20 uppercase tracking-widest whitespace-nowrap">Rounds:</span>
                             <a href="#summary" className="px-3 py-1 bg-violet-600 rounded-full text-[9px] font-bold text-white whitespace-nowrap">Summary</a>
-                            {data.activities.filter(a => a.subGames.length > 0).map(act => (
+                            {showDetails && data.activities.filter(a => a.subGames.length > 0).map(act => (
                                 <a key={act.id} href={`#act-${act.id}`} className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[9px] font-bold text-white/60 whitespace-nowrap">{act.name}</a>
                             ))}
                         </div>
@@ -148,10 +159,10 @@ export default function ViewBoardPage() {
 
                     <div className="border border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white/[0.02] backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
                         <div className="overflow-x-auto no-scrollbar">
-                            <div className="min-w-max">
+                            <div className="min-w-full">
                                 {/* Table Header */}
                                 <div className="grid bg-black/60 text-white/30 font-black text-[9px] sm:text-[10px] uppercase tracking-[0.2em] border-b border-white/10 sticky top-0 z-30"
-                                    style={{ gridTemplateColumns: `70px minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px)` }}>
+                                    style={{ gridTemplateColumns: `70px minmax(160px, 240px) 100px repeat(${data.activities.length}, minmax(140px, 1fr))` }}>
                                     <div className="p-4 sm:p-6 text-center border-r border-white/10 bg-[#050505] sticky left-0 z-40 shadow-xl">Rank</div>
                                     <div className="p-4 sm:p-6 border-r border-white/10 bg-[#050505] sticky left-[70px] z-40 shadow-xl">Team</div>
                                     <div className="p-4 sm:p-6 text-center text-violet-400 bg-violet-500/10 border-r border-white/10 sticky left-[230px] sm:left-[310px] z-40 shadow-xl">Total</div>
@@ -177,7 +188,7 @@ export default function ViewBoardPage() {
                                                     ${index === 1 ? 'bg-gradient-to-r from-slate-400/[0.08] to-transparent' : ''}
                                                     ${index === 2 ? 'bg-gradient-to-r from-orange-700/[0.08] to-transparent' : ''}
                                                 `}
-                                                style={{ gridTemplateColumns: `70px minmax(160px, 240px) 100px repeat(${data.activities.length}, 140px)` }}
+                                                style={{ gridTemplateColumns: `70px minmax(160px, 240px) 100px repeat(${data.activities.length}, minmax(140px, 1fr))` }}
                                             >
                                                 {/* Rank */}
                                                 <div className="p-4 sm:p-6 text-center flex items-center justify-center sticky left-0 z-20 border-r border-white/10">
@@ -221,7 +232,7 @@ export default function ViewBoardPage() {
                 </section>
 
                 {/* DETAILED ACTIVITY BREAKDOWNS */}
-                {data.activities.filter(a => a.subGames.length > 0).map((act) => (
+                {showDetails && data.activities.filter(a => a.subGames.length > 0).map((act) => (
                     <section key={act.id} id={`act-${act.id}`} className="space-y-6 sm:space-y-8 scroll-mt-24">
                         <div className="flex items-center justify-between px-2 sm:px-4">
                             <div className="flex items-center gap-4 sm:gap-5">

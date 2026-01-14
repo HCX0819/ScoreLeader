@@ -27,6 +27,7 @@
     - [x] Eliminate "Dark Line" seams (unified backgrounds & removed borders).
     - [x] Add logo error handling for broken images.
     - [x] Ensure background color column updates reliably.
+    - [x] Fix View Page right-side empty space (make full width & responsive).
 
 - [x] **Dashboard Enhancements** (from previous session)
     - [x] Create Info Edit Modal on Dashboard.
@@ -51,6 +52,7 @@
 - [x] **1. UI & Wording Clarity**
     - [x] Rename "Share" and "View Board" buttons for better clarity.
     - [x] Add visual indicators for "Edit Mode" vs "View-only Mode".
+    - [x] Implement toggle to show/hide detailed activity breakdowns (sub-tables) on View Page.
 
 - [x] **2. Sharing & Access Control**
     - [x] Enable sharing for view-only mode.
