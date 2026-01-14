@@ -63,7 +63,7 @@ export default function ControllerPage() {
     }} />;
   }
 
-  const data = board.data || { participants: [], columns: [] };
+  const data = board.data || { participants: [], activities: [] };
 
   // --- Actions ---
 
@@ -117,6 +117,15 @@ export default function ControllerPage() {
     }
   };
 
+  const updateBackgroundColor = async (color: string) => {
+    const { error } = await supabase
+      .from('scoreboards')
+      .update({ background_color: color })
+      .eq('id', boardId);
+
+    if (error) console.error("Color update failed:", error.message);
+  };
+
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     setCopied(true);
@@ -124,21 +133,60 @@ export default function ControllerPage() {
   };
 
   // ... (Existing updateScore, addParticipant, addColumn, updateName, deleteItem, calculateTotal logic - kept same)
-  const updateScore = async (participantId: string, columnId: string, delta: number) => {
+  // --- Helper Calculations ---
+  const getActivityTotal = (activityId: string, participantId: string) => {
+    const activity = data.activities.find(a => a.id === activityId);
+    if (!activity) return 0;
+
+    if (activity.subGames.length === 0) {
+      return activity.directScores[participantId] || 0;
+    }
+
+    return activity.subGames.reduce((sum, game) => sum + (game.scores[participantId] || 0), 0);
+  };
+
+  const getGrandTotal = (participantId: string) => {
+    return data.activities.reduce((sum, activity) => sum + getActivityTotal(activity.id, participantId), 0);
+  };
+
+  // --- Actions ---
+
+  const updateActivityScore = async (activityId: string, participantId: string, delta: number) => {
     const newData = { ...data };
-    const participant = newData.participants.find(p => p.id === participantId);
-    if (!participant) return;
-    const currentScore = participant.scores[columnId] || 0;
-    participant.scores[columnId] = Math.max(0, currentScore + delta);
+    const activity = newData.activities.find(a => a.id === activityId);
+    if (!activity || activity.subGames.length > 0) return; // Only direct if no subgames
+    const current = activity.directScores[participantId] || 0;
+    activity.directScores[participantId] = Math.max(0, current + delta);
     await updateBoardData(newData);
   };
 
-  const setScore = async (participantId: string, columnId: string, value: string) => {
+  const setActivityScore = async (activityId: string, participantId: string, value: string) => {
     const newData = { ...data };
-    const participant = newData.participants.find(p => p.id === participantId);
-    if (!participant) return;
+    const activity = newData.activities.find(a => a.id === activityId);
+    if (!activity || activity.subGames.length > 0) return;
     const numValue = parseInt(value) || 0;
-    participant.scores[columnId] = Math.max(0, numValue);
+    activity.directScores[participantId] = Math.max(0, numValue);
+    await updateBoardData(newData);
+    setEditingId(null);
+  };
+
+  const updateSubGameScore = async (activityId: string, subGameId: string, participantId: string, delta: number) => {
+    const newData = { ...data };
+    const activity = newData.activities.find(a => a.id === activityId);
+    const subGame = activity?.subGames.find(g => g.id === subGameId);
+    if (!subGame) return;
+    const current = subGame.scores[participantId] || 0;
+    subGame.scores[participantId] = Math.max(0, current + delta);
+    await updateBoardData(newData);
+  };
+
+  const setSubGameScore = async (activityId: string, subGameId: string, participantId: string, value: string) => {
+    const newData = { ...data };
+    const activity = newData.activities.find(a => a.id === activityId);
+    const subGame = activity?.subGames.find(g => g.id === subGameId);
+    if (!subGame) return;
+    const numValue = parseInt(value) || 0;
+    subGame.scores[participantId] = Math.max(0, numValue);
     await updateBoardData(newData);
     setEditingId(null);
   };
@@ -148,52 +196,69 @@ export default function ControllerPage() {
     newData.participants.push({
       id: crypto.randomUUID(),
       name: `Team ${String.fromCharCode(65 + newData.participants.length)}`,
+    });
+    await updateBoardData(newData);
+  };
+
+  const addActivity = async () => {
+    const newData = { ...data };
+    newData.activities.push({
+      id: crypto.randomUUID(),
+      name: `ROUND ${newData.activities.length + 1}`,
+      subGames: [],
+      directScores: {}
+    });
+    await updateBoardData(newData);
+  };
+
+  const addSubGame = async (activityId: string) => {
+    const newData = { ...data };
+    const activity = newData.activities.find(a => a.id === activityId);
+    if (!activity) return;
+    activity.subGames.push({
+      id: crypto.randomUUID(),
+      name: `Game ${activity.subGames.length + 1}`,
       scores: {}
     });
     await updateBoardData(newData);
   };
 
-  const addColumn = async () => {
-    const newData = { ...data };
-    newData.columns.push({
-      id: crypto.randomUUID(),
-      name: `Round ${newData.columns.length + 1}`,
-    });
-    await updateBoardData(newData);
-  };
-
-  const updateName = async (type: 'participant' | 'column', id: string, newName: string) => {
+  const updateName = async (type: 'participant' | 'activity' | 'subgame', id: string, newName: string, activityId?: string) => {
     const newData = { ...data };
     if (type === 'participant') {
       const p = newData.participants.find(x => x.id === id);
       if (p) p.name = newName;
-    } else {
-      const c = newData.columns.find(x => x.id === id);
-      if (c) c.name = newName;
+    } else if (type === 'activity') {
+      const a = newData.activities.find(x => x.id === id);
+      if (a) a.name = newName;
+    } else if (type === 'subgame' && activityId) {
+      const a = newData.activities.find(x => x.id === activityId);
+      const g = a?.subGames.find(x => x.id === id);
+      if (g) g.name = newName;
     }
     await updateBoardData(newData);
     setEditingId(null);
   };
 
-  const deleteItem = async (type: 'participant' | 'column', id: string) => {
+  const deleteItem = async (type: 'participant' | 'activity' | 'subgame', id: string, activityId?: string) => {
     if (!confirm("Are you sure?")) return;
     const newData = { ...data };
     if (type === 'participant') {
       newData.participants = newData.participants.filter(x => x.id !== id);
-    } else {
-      newData.columns = newData.columns.filter(x => x.id !== id);
+    } else if (type === 'activity') {
+      newData.activities = newData.activities.filter(x => x.id !== id);
+    } else if (type === 'subgame' && activityId) {
+      const a = newData.activities.find(x => x.id === activityId);
+      if (a) a.subGames = a.subGames.filter(x => x.id !== id);
     }
     await updateBoardData(newData);
   };
 
-  const calculateTotal = (participantId: string) => {
-    const p = data.participants.find(x => x.id === participantId);
-    if (!p) return 0;
-    return Object.values(p.scores).reduce((a, b) => a + b, 0);
-  };
-
   return (
-    <div className="h-screen bg-[#050505] text-white font-sans selection:bg-violet-500/30 overflow-hidden flex flex-col">
+    <div
+      className="h-screen text-white font-sans selection:bg-violet-500/30 overflow-hidden flex flex-col transition-colors duration-700"
+      style={{ backgroundColor: board.background_color || '#050505' }}
+    >
 
       {/* Background Glow */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(120,40,200,0.1),_transparent_50%)] pointer-events-none" />
@@ -248,18 +313,28 @@ export default function ControllerPage() {
             </div>
           </div>
         </div>
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowSettings(true)}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full text-sm font-bold border border-white/5 transition-all hover:scale-105 active:scale-95"
-          >
-            <Share2 size={18} /> <span className="hidden sm:inline">Share</span>
-          </button>
-          <Link href={`/view/${boardId}`} target="_blank">
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all hover:scale-105 active:scale-95">
-              View Board
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/10 rounded-full px-4 py-2 backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.8)]"></span>
+            </span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-300/80">Authorized Editor</span>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowSettings(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-full text-sm font-bold border border-white/5 transition-all hover:scale-105 active:scale-95"
+            >
+              <Share2 size={18} /> <span className="hidden sm:inline">Settings & Links</span>
             </button>
-          </Link>
+            <Link href={`/view/${boardId}`} target="_blank">
+              <button className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white rounded-full text-sm font-bold shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all hover:scale-105 active:scale-95">
+                Open View Page
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -299,33 +374,25 @@ export default function ControllerPage() {
                 </div>
               </div>
 
-              <div className="h-px bg-white/5" />
-
-              {/* PIN Section */}
               <div>
                 <label className="block text-xs font-bold text-white/40 uppercase tracking-widest mb-3">
-                  Security PIN
+                  Background Color
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {['#050505', '#0f172a', '#1a1a1a', '#2d3436', '#0984e3', '#6c5ce7', '#d63031', '#00b894'].map(color => (
+                    <button
+                      key={color}
+                      onClick={() => updateBackgroundColor(color)}
+                      className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${board.background_color === color ? 'border-violet-500 scale-110 shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'border-white/10'}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
                   <input
-                    type="text"
-                    value={newPin}
-                    onChange={(e) => setNewPin(e.target.value)}
-                    placeholder={board.pin ? "Change PIN" : "Set a PIN"}
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white/80 outline-none focus:border-violet-500/50 transition-colors placeholder-white/20"
+                    type="color"
+                    className="w-8 h-8 rounded-full bg-transparent border-none cursor-pointer"
+                    onChange={(e) => updateBackgroundColor(e.target.value)}
                   />
-                  <button
-                    onClick={updatePin}
-                    className="bg-violet-600 hover:bg-violet-500 text-white px-6 py-2 rounded-xl font-bold transition-colors text-sm shadow-[0_0_15px_rgba(139,92,246,0.2)]"
-                  >
-                    Save
-                  </button>
                 </div>
-                <p className="text-xs text-white/30 mt-3 leading-relaxed font-medium">
-                  {board.pin
-                    ? <span className="text-amber-400/80">Currently Locked. Clear input & save to unlock.</span>
-                    : "Optional: Set a PIN to restrict editing access."}
-                </p>
               </div>
             </div>
           </div>
@@ -333,152 +400,194 @@ export default function ControllerPage() {
       )}
 
       {/* Main Content Area - Flex Grow to Fill Screen */}
-      <main className="flex-1 overflow-hidden p-3 sm:p-6 flex flex-col items-center">
+      <main className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-12">
 
-        {/* Glass Card Container - Max Height but shrinks if content is small */}
-        <div className="w-fit max-w-full sm:max-w-[95%] xl:max-w-[98%] max-h-full bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl overflow-x-auto flex flex-col">
-
-          {/* Table Header - FIXED at Top of Card */}
-          <div className="flex-none grid border-b border-white/5 bg-[#0a0a0a]/95 z-10 shadow-lg min-w-max"
-            style={{ gridTemplateColumns: `280px 120px repeat(${data.columns.length}, 180px) 80px` }}>
-
-            <div className="p-5 font-bold text-white/40 text-xs uppercase tracking-widest flex items-center sticky left-0 bg-[#0a0a0a] z-20 border-r border-white/5">
-              Participants
-            </div>
-
-            <div className="p-5 font-black text-white/80 text-xs uppercase tracking-widest text-center border-l border-white/5 bg-violet-500/20 sticky left-[280px] z-20 border-r border-white/10 shadow-[4px_0_10px_rgba(0,0,0,0.5)]">
-              Total
-            </div>
-
-            {data.columns.map(col => (
-              <div key={col.id} className="p-4 border-l border-white/5 relative group flex items-center justify-center">
-                {editingId === col.id ? (
-                  <input
-                    autoFocus
-                    className="w-full bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-sm font-bold text-center text-white outline-none"
-                    defaultValue={col.name}
-                    onBlur={(e) => updateName('column', col.id, e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                  />
-                ) : (
-                  <div
-                    onClick={() => setEditingId(col.id)}
-                    className="text-center cursor-pointer hover:bg-white/5 rounded py-1 px-3 w-full"
-                  >
-                    <span className="text-xs font-bold text-white/60 uppercase tracking-wider block truncate">{col.name}</span>
-                  </div>
-                )}
-                <button
-                  onClick={() => deleteItem('column', col.id)}
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1.5 text-white/20 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
-            ))}
-
-            <div className="p-2 flex items-center justify-center border-l border-white/5 sticky right-0 bg-[#0a0a0a] z-20 shadow-[-4px_0_10px_rgba(0,0,0,0.5)]">
-              <button onClick={addColumn} className="p-2 hover:bg-white/10 text-violet-400 rounded-lg transition-colors" title="Add Column">
-                <Columns size={18} />
-              </button>
-            </div>
-          </div>
-
-          {/* Table Body - SCROLLABLE Area */}
-          <div className="overflow-y-auto overflow-x-hidden min-h-0 min-w-max">
-            {data.participants.map((participant) => (
-              <div key={participant.id} className="grid border-b border-white/5 hover:bg-white/[0.02] transition-colors group"
-                style={{ gridTemplateColumns: `280px 120px repeat(${data.columns.length}, 180px) 80px` }}>
-
-                {/* Participant Name */}
-                <div className="p-5 flex items-center gap-4 sticky left-0 bg-[#050505] z-10 border-r border-white/5 group-hover:bg-[#0a0a0a] transition-colors shadow-[4px_0_10px_rgba(0,0,0,0.3)]">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/10 to-transparent border border-white/5 flex items-center justify-center text-sm font-black text-white/60 shadow-inner">
-                    {participant.name.charAt(0)}
-                  </div>
-                  {editingId === participant.id ? (
-                    <input
-                      autoFocus
-                      className="flex-1 bg-black/40 border border-violet-500/50 rounded px-3 py-2 text-sm font-bold text-white outline-none"
-                      defaultValue={participant.name}
-                      onBlur={(e) => updateName('participant', participant.id, e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-                    />
-                  ) : (
-                    <span
-                      onClick={() => setEditingId(participant.id)}
-                      className="flex-1 font-bold text-white/90 text-lg cursor-pointer hover:text-violet-300 transition-colors truncate"
-                    >
-                      {participant.name}
-                    </span>
-                  )}
-                </div>
-
-                {/* Total Score */}
-                <div className="p-5 border-l border-white/5 flex items-center justify-center bg-violet-500/5 sticky left-[280px] z-10 border-r border-white/10 group-hover:bg-violet-500/10 transition-colors shadow-[4px_0_10px_rgba(0,0,0,0.3)]">
-                  <span className="text-3xl font-black text-white tracking-tight drop-shadow-[0_0_10px_rgba(139,92,246,0.3)]">
-                    {calculateTotal(participant.id)}
-                  </span>
-                </div>
-
-                {/* Score Columns */}
-                {data.columns.map(col => (
-                  <div key={col.id} className="p-3 border-l border-white/5 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-2 w-full max-w-[120px]">
-                      <div className="flex items-center justify-between w-full bg-black/20 rounded-xl p-1 border border-white/5">
-                        <button
-                          onClick={() => updateScore(participant.id, col.id, -10)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors text-xs font-medium"
-                        >-10</button>
+        {/* SUMMARY TABLE SECTION */}
+        <div className="flex flex-col items-center">
+          <div className="w-full max-w-7xl">
+            <h2 className="text-sm font-black text-white/30 uppercase tracking-[0.3em] mb-6 px-4">Scoresheet Summary</h2>
+            <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 shadow-2xl overflow-x-auto">
+              <div className="min-w-max">
+                {/* Header */}
+                <div className="grid border-b border-white/5 bg-[#0a0a0a]/95"
+                  style={{ gridTemplateColumns: `280px 120px repeat(${data.activities.length}, 160px) 80px` }}>
+                  <div className="p-5 font-bold text-white/40 text-xs uppercase tracking-widest sticky left-0 bg-[#0a0a0a] z-20 border-r border-white/5">Teams</div>
+                  <div className="p-5 font-black text-violet-400 text-xs uppercase tracking-widest text-center border-l border-white/5 bg-violet-500/10 sticky left-[280px] z-20 border-r border-white/10">Grand Total</div>
+                  {data.activities.map(act => (
+                    <div key={act.id} className="p-4 border-l border-white/5 relative group flex items-center justify-center">
+                      {editingId === act.id ? (
                         <input
-                          type="number"
-                          className={`w-16 bg-transparent text-center font-bold text-lg text-white outline-none appearance-none transition-all
-                            ${editingId === `score-${participant.id}-${col.id}` ? "bg-white/10 ring-2 ring-violet-500/50 rounded" : ""}`}
-                          defaultValue={participant.scores[col.id] || 0}
-                          key={`${participant.id}-${col.id}-${participant.scores[col.id]}`}
-                          readOnly={editingId !== `score-${participant.id}-${col.id}`}
-                          onDoubleClick={() => setEditingId(`score-${participant.id}-${col.id}`)}
-                          onBlur={(e) => setScore(participant.id, col.id, e.target.value)}
+                          autoFocus
+                          className="w-full bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-sm font-bold text-center text-white outline-none"
+                          defaultValue={act.name}
+                          onBlur={(e) => updateName('activity', act.id, e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
                         />
-                        <button
-                          onClick={() => updateScore(participant.id, col.id, 10)}
-                          className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 hover:text-white transition-colors text-xs font-medium"
-                        >+10</button>
+                      ) : (
+                        <div onClick={() => act.subGames.length === 0 && setEditingId(act.id)} className="text-center cursor-pointer hover:bg-white/5 rounded py-1 px-3 w-full">
+                          <span className="text-xs font-bold text-white/60 uppercase tracking-wider block truncate">{act.name}</span>
+                        </div>
+                      )}
+                      <button onClick={() => deleteItem('activity', act.id)} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1.5 text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="p-2 flex items-center justify-center border-l border-white/5 sticky right-0 bg-[#0a0a0a] z-20">
+                    <button onClick={addActivity} className="p-2 hover:bg-white/10 text-violet-400 rounded-lg transition-colors" title="Add Activity">
+                      <Plus size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Body */}
+                {data.participants.map(p => (
+                  <div key={p.id} className="grid border-b border-white/5 hover:bg-white/[0.02] transition-colors"
+                    style={{ gridTemplateColumns: `280px 120px repeat(${data.activities.length}, 160px) 80px` }}>
+                    <div className="p-5 flex items-center gap-4 sticky left-0 bg-[#050505] z-10 border-r border-white/5 shadow-lg">
+                      <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-xs font-black text-white/40">{p.name.charAt(0)}</div>
+                      {editingId === p.id ? (
+                        <input autoFocus className="flex-1 bg-black/40 border border-violet-500/50 rounded px-2 py-1 text-sm font-bold text-white outline-none"
+                          defaultValue={p.name} onBlur={(e) => updateName('participant', p.id, e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+                      ) : (
+                        <span onClick={() => setEditingId(p.id)} className="font-bold text-white/80 cursor-pointer">{p.name}</span>
+                      )}
+                    </div>
+                    <div className="p-5 flex items-center justify-center bg-violet-500/5 sticky left-[280px] z-10 border-r border-white/10 shadow-lg">
+                      <span className="text-2xl font-black text-white">{getGrandTotal(p.id)}</span>
+                    </div>
+                    {data.activities.map(act => (
+                      <div key={act.id} className="p-3 border-l border-white/5 flex items-center justify-center">
+                        {act.subGames.length > 0 ? (
+                          <span className="text-lg font-bold text-white/50">{getActivityTotal(act.id, p.id)}</span>
+                        ) : (
+                          <div className="flex items-center gap-2 bg-black/20 rounded-lg p-1 border border-white/5">
+                            <button onClick={() => updateActivityScore(act.id, p.id, -1)} className="w-6 h-6 hover:bg-white/10 rounded text-white/30 text-xs">-</button>
+                            {editingId === `score-${p.id}-${act.id}` ? (
+                              <input type="number" autoFocus className="w-12 bg-white/10 text-center font-bold text-white outline-none rounded"
+                                defaultValue={act.directScores[p.id] || 0}
+                                onBlur={(e) => setActivityScore(act.id, p.id, e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+                            ) : (
+                              <span onDoubleClick={() => setEditingId(`score-${p.id}-${act.id}`)} className="w-12 text-center font-bold text-white cursor-text">{act.directScores[p.id] || 0}</span>
+                            )}
+                            <button onClick={() => updateActivityScore(act.id, p.id, 1)} className="w-6 h-6 hover:bg-white/10 rounded text-white/30 text-xs">+</button>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex gap-1 w-full px-1">
-                        <button onClick={() => updateScore(participant.id, col.id, -100)} className="flex-1 py-1.5 bg-white/5 hover:bg-white/10 text-[10px] rounded-lg text-white/30 font-bold transition-colors border border-transparent hover:border-white/5">-100</button>
-                        <button onClick={() => updateScore(participant.id, col.id, 100)} className="flex-1 py-1.5 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded-lg text-violet-300 font-bold transition-colors border border-transparent hover:border-violet-500/20">+100</button>
-                      </div>
+                    ))}
+                    <div className="p-2 flex items-center justify-center border-l border-white/5 sticky right-0 bg-[#050505] z-10">
+                      <button onClick={() => deleteItem('participant', p.id)} className="p-2 text-white/20 hover:text-red-400 transition-colors">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
                 ))}
 
-                {/* Delete Row */}
-                <div className="p-2 flex items-center justify-center border-l border-white/5 sticky right-0 bg-[#050505] z-10 group-hover:bg-[#0a0a0a] transition-colors shadow-[-4px_0_10px_rgba(0,0,0,0.3)]">
-                  <button
-                    onClick={() => deleteItem('participant', participant.id)}
-                    className="p-3 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-colors opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={18} />
+                {/* Add Participant Row */}
+                <div className="p-4 border-t border-white/5 bg-white/[0.02]">
+                  <button onClick={addParticipant} className="w-full py-4 border border-dashed border-white/10 rounded-xl text-white/30 font-bold hover:bg-white/5 transition-all flex items-center justify-center gap-2 uppercase text-xs tracking-widest">
+                    <UserPlus size={16} /> Add Team
                   </button>
                 </div>
-
               </div>
-            ))}
-
-            {/* Add Participant Footer */}
-            <div className="p-3 border-t border-white/5 bg-white/5 backdrop-blur-sm">
-              <button
-                onClick={addParticipant}
-                className="w-full py-4 border border-dashed border-white/10 rounded-xl text-white/40 font-bold hover:border-violet-500/50 hover:text-violet-300 hover:bg-violet-500/5 transition-all flex items-center justify-center gap-2 uppercase tracking-wide text-sm"
-              >
-                <UserPlus size={18} /> Add Participant
-              </button>
             </div>
-            {/* Height Spacer for bottom nav/padding */}
-            <div className="h-12"></div>
           </div>
+        </div>
 
+        {/* INDIVIDUAL ACTIVITY SECTIONS */}
+        <div className="max-w-7xl mx-auto space-y-16">
+          {data.activities.map((act) => (
+            <section key={act.id} className="relative pt-8 group">
+              <div className="flex items-center justify-between mb-8 px-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center font-black shadow-[0_0_20px_rgba(139,92,246,0.5)]">
+                    {act.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-white tracking-tight">{act.name}</h3>
+                    <p className="text-xs text-white/30 font-bold uppercase tracking-widest">Breakdown & Details</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => addSubGame(act.id)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-white/5 hover:bg-violet-600 border border-white/10 rounded-full text-sm font-bold transition-all hover:scale-105 active:scale-95 text-white/60 hover:text-white"
+                >
+                  <Plus size={18} /> Add Sub-Game
+                </button>
+              </div>
+
+              {act.subGames.length > 0 ? (
+                <div className="bg-[#0a0a0a] rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/5 bg-white/[0.02]">
+                          <th className="p-6 text-left text-xs font-black text-white/30 uppercase tracking-[0.2em] w-64">Sub-Game</th>
+                          {data.participants.map(p => (
+                            <th key={p.id} className="p-6 text-center text-xs font-black text-white/30 uppercase tracking-[0.2em]">{p.name}</th>
+                          ))}
+                          <th className="w-20"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {act.subGames.map((game) => (
+                          <tr key={game.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
+                            <td className="p-6">
+                              {editingId === game.id ? (
+                                <input autoFocus className="bg-white/5 border border-violet-500 items-center justify-center rounded px-3 py-1.5 text-sm font-bold text-white outline-none w-full"
+                                  defaultValue={game.name} onBlur={(e) => updateName('subgame', game.id, e.target.value, act.id)}
+                                  onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()} />
+                              ) : (
+                                <span onClick={() => setEditingId(game.id)} className="font-bold text-white cursor-pointer hover:text-violet-400">{game.name}</span>
+                              )}
+                            </td>
+                            {data.participants.map(p => (
+                              <td key={p.id} className="p-6">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="flex items-center justify-between w-32 bg-white/5 rounded-xl p-1.5 border border-white/10">
+                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, -1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">-</button>
+                                    <input type="number" className="w-12 bg-transparent text-center font-black text-white outline-none"
+                                      value={game.scores[p.id] || 0} onChange={(e) => setSubGameScore(act.id, game.id, p.id, e.target.value)} />
+                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 1)} className="w-8 h-8 flex items-center justify-center hover:bg-white/10 rounded-lg text-white/40 font-bold transition-colors">+</button>
+                                  </div>
+                                  <div className="flex gap-1 w-full justify-center">
+                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 10)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+10</button>
+                                    <button onClick={() => updateSubGameScore(act.id, game.id, p.id, 100)} className="px-2 py-1 bg-violet-500/10 hover:bg-violet-500/20 text-[10px] rounded font-black text-violet-400 transition-colors">+100</button>
+                                  </div>
+                                </div>
+                              </td>
+                            ))}
+                            <td className="p-4 text-center">
+                              <button onClick={() => deleteItem('subgame', game.id, act.id)} className="p-2 text-white/10 hover:text-red-400 transition-colors">
+                                <Trash2 size={16} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white/[0.02] rounded-3xl border border-dashed border-white/10 p-12 flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
+                    <Plus className="text-white/20" />
+                  </div>
+                  <h4 className="text-white font-black mb-1 italic opacity-60">No sub-games in {act.name} yet</h4>
+                  <p className="text-white/30 text-xs max-w-xs">You can edit {act.name} scores directly in the main table above, or add a sub-game to break it down.</p>
+                </div>
+              )}
+            </section>
+          ))}
+          {data.activities.length === 0 && (
+            <div className="py-32 flex flex-col items-center text-center">
+              <Plus size={48} className="text-white/5 mb-6" />
+              <h3 className="text-xl font-bold text-white/40">No activities yet</h3>
+              <p className="text-white/20 text-sm mt-2">Add a column to the summary table to create your first activity.</p>
+            </div>
+          )}
         </div>
       </main>
     </div>

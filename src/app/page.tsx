@@ -38,11 +38,11 @@ export default function Dashboard() {
     // Initialize with a default structure
     const defaultData = {
       participants: [
-        { id: crypto.randomUUID(), name: 'Team A', scores: {} },
-        { id: crypto.randomUUID(), name: 'Team B', scores: {} }
+        { id: crypto.randomUUID(), name: 'Team A' },
+        { id: crypto.randomUUID(), name: 'Team B' }
       ],
-      columns: [
-        { id: crypto.randomUUID(), name: 'Score' }
+      activities: [
+        { id: crypto.randomUUID(), name: 'ROUND 1', subGames: [], directScores: {} }
       ]
     };
 
